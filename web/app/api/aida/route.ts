@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import type Anthropic from "@anthropic-ai/sdk";
 import { anthropic, AIDA_MODEL, AIDA_SYSTEM_PROMPT } from "@/lib/anthropic";
+import { env } from "@/lib/env";
+import { isAllowedOrigin } from "@/lib/origin";
+import { aidaLimiter, ipFromRequest } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -15,10 +18,22 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!isAllowedOrigin(req)) {
+    return NextResponse.json({ error: "Origin not allowed." }, { status: 403 });
+  }
+  if (!env().ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: "ANTHROPIC_API_KEY is not configured on the server." },
       { status: 503 }
+    );
+  }
+
+  const ip = ipFromRequest(req);
+  const limited = await aidaLimiter().limit(ip);
+  if (!limited.success) {
+    return NextResponse.json(
+      { error: "Too many requests. Slow down for a minute." },
+      { status: 429, headers: { "Retry-After": "60" } }
     );
   }
 

@@ -1,7 +1,7 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
+import { getUserWithRole } from "@/lib/supabase/server";
+import { hasSupabasePublic, env } from "@/lib/env";
+import { HeaderMobile } from "@/components/HeaderMobile";
 
 const NAV = [
   { href: "/about", label: "About" },
@@ -10,8 +10,10 @@ const NAV = [
   { href: "/apply", label: "Apply" },
 ];
 
-export function SiteHeader() {
-  const [open, setOpen] = useState(false);
+export async function SiteHeader() {
+  const user = hasSupabasePublic(env()) ? await safeGetUser() : null;
+  const isAdmin = user?.role === "admin";
+
   return (
     <header className="sticky top-0 z-40 border-b border-paper-3 bg-white/85 backdrop-blur">
       <div className="border-b border-paper-2 bg-paper">
@@ -35,30 +37,39 @@ export function SiteHeader() {
               {n.label}
             </Link>
           ))}
-          <Link href="/apply" className="btn-primary">Apply now</Link>
+          {isAdmin && (
+            <Link href="/admin" className="text-sm font-medium text-electric-700 hover:text-electric-600">
+              Admin
+            </Link>
+          )}
+          {user ? (
+            <form action="/auth/signout" method="post" className="contents">
+              <span className="text-[12px] text-ink-3">{user.user.email}</span>
+              <button type="submit" className="btn-ghost">Sign out</button>
+            </form>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm text-ink-2 hover:text-ink">Sign in</Link>
+              <Link href="/apply" className="btn-primary">Apply now</Link>
+            </>
+          )}
         </nav>
 
-        <button
-          type="button"
-          className="md:hidden grid h-9 w-9 place-items-center rounded-sm border border-paper-3"
-          aria-label="Menu"
-          onClick={() => setOpen((v) => !v)}
-        >
-          <span className="block h-px w-5 bg-ink before:block before:h-px before:w-5 before:-translate-y-1.5 before:bg-ink after:block after:h-px after:w-5 after:translate-y-1 after:bg-ink" />
-        </button>
+        <HeaderMobile
+          nav={NAV}
+          isAdmin={isAdmin}
+          signedIn={Boolean(user)}
+          email={user?.user.email ?? null}
+        />
       </div>
-      {open && (
-        <div className="border-t border-paper-2 md:hidden">
-          <div className="container-page flex flex-col gap-1 py-3">
-            {NAV.map((n) => (
-              <Link key={n.href} href={n.href} className="rounded-sm px-2 py-2 text-sm text-ink-2 hover:bg-paper">
-                {n.label}
-              </Link>
-            ))}
-            <Link href="/apply" className="btn-primary mt-2">Apply now</Link>
-          </div>
-        </div>
-      )}
     </header>
   );
+}
+
+async function safeGetUser() {
+  try {
+    return await getUserWithRole();
+  } catch {
+    return null;
+  }
 }
