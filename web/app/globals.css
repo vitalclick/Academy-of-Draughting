@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body { @apply bg-white text-ink antialiased; }
+  body { font-feature-settings: 'ss01', 'cv11'; }
+  ::selection { @apply bg-electric-500 text-white; }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-page px-5 sm:px-8 lg:px-16; }
+  .mono { @apply font-mono uppercase tracking-[0.08em] text-[12px]; }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-md bg-electric-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-electric-500;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-md border border-paper-3 px-4 py-2.5 text-sm font-medium text-ink transition hover:border-ink-3;
+  }
+  .btn-ghost-dark {
+    @apply inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/10;
+  }
+  .eyebrow { @apply mono text-electric-500; }
+  .section-dark { @apply bg-navy-900 text-white; }
+  .card-dark {
+    @apply rounded-lg border border-white/10 bg-white/[0.03] p-6 transition hover:border-white/20 hover:bg-white/[0.06];
+  }
+}
