@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { runOcrOnPdf } from "@/lib/ocr";
 import { isAllowedOrigin } from "@/lib/origin";
+import type { Json } from "@/lib/database.types";
 
 export const runtime = "nodejs";
 
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
 
   await supabase
     .from("application_documents")
-    .update({ ocr_status: "done", ocr_result: result.raw as object })
+    .update({ ocr_status: "done", ocr_result: result.raw as Json })
     .eq("id", doc.id);
 
   return NextResponse.json({ status: "done" });

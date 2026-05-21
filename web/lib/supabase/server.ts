@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { env, hasSupabasePublic } from "@/lib/env";
+import type { Database } from "@/lib/database.types";
 
 export function getSupabaseServer() {
   const e = env();
@@ -10,7 +11,7 @@ export function getSupabaseServer() {
     );
   }
   const cookieStore = cookies();
-  return createServerClient(e.NEXT_PUBLIC_SUPABASE_URL, e.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  return createServerClient<Database>(e.NEXT_PUBLIC_SUPABASE_URL, e.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       get(name: string) {
         return cookieStore.get(name)?.value;
@@ -54,9 +55,9 @@ export async function getUserWithRole(): Promise<
     .from("profiles")
     .select("role")
     .eq("id", userData.user.id)
-    .maybeSingle();
+    .maybeSingle<{ role: UserRole }>();
   return {
     user: { id: userData.user.id, email: userData.user.email ?? null },
-    role: (profile?.role as UserRole) ?? "student",
+    role: profile?.role ?? "student",
   };
 }

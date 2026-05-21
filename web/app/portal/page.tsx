@@ -2,6 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSupabaseServer, getUserWithRole } from "@/lib/supabase/server";
 import { DocumentUpload } from "@/components/DocumentUpload";
+import type { Application } from "@/lib/database.types";
+
+type PortalApplication = Pick<
+  Application,
+  "id" | "full_name" | "course_slug" | "study_mode" | "status" | "created_at"
+>;
 
 export const metadata = { title: "Student Portal — Academy of Advanced Draughting" };
 export const dynamic = "force-dynamic";
@@ -15,7 +21,8 @@ export default async function PortalPage() {
     .from("applications")
     .select("id, full_name, course_slug, study_mode, status, created_at")
     .eq("user_id", session.user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<PortalApplication[]>();
 
   return (
     <section className="bg-navy-900 text-white">

@@ -1,6 +1,7 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "@/lib/database.types";
 
 export function getSupabaseBrowser() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,5 +9,5 @@ export function getSupabaseBrowser() {
   if (!url || !key) {
     throw new Error("NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY missing");
   }
-  return createBrowserClient(url, key);
+  return createBrowserClient<Database>(url, key);
 }

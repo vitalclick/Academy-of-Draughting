@@ -1,27 +1,40 @@
 import { z } from "zod";
 
+// Empty strings in .env.local should behave like "unset" rather than "invalid".
+const optStr = z
+  .string()
+  .transform((s) => (s.trim() === "" ? undefined : s))
+  .optional();
+const optUrl = optStr.refine((v) => v === undefined || /^https?:\/\//.test(v), {
+  message: "must be a valid URL",
+});
+const optEmail = optStr.refine(
+  (v) => v === undefined || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
+  { message: "must be a valid email" }
+);
+
 const schema = z.object({
   // Required for any AIDA call
-  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: optStr,
 
   // Supabase — server-only service role
-  SUPABASE_URL: z.string().url().optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_URL: optUrl,
+  SUPABASE_SERVICE_ROLE_KEY: optStr,
 
   // Supabase — public, used by browser + SSR auth
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+  NEXT_PUBLIC_SUPABASE_URL: optUrl,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: optStr,
 
   // App
-  NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_SITE_URL: optUrl.transform((v) => v ?? "http://localhost:3000"),
 
   // Pass B — optional integrations (no-op if unset)
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-  RESEND_API_KEY: z.string().optional(),
-  RESEND_FROM_EMAIL: z.string().email().default("admissions@aod.local"),
-  ADMISSIONS_NOTIFY_EMAIL: z.string().email().optional(),
-  MINDEE_API_KEY: z.string().optional(),
+  UPSTASH_REDIS_REST_URL: optUrl,
+  UPSTASH_REDIS_REST_TOKEN: optStr,
+  RESEND_API_KEY: optStr,
+  RESEND_FROM_EMAIL: optEmail.transform((v) => v ?? "admissions@aod.local"),
+  ADMISSIONS_NOTIFY_EMAIL: optEmail,
+  MINDEE_API_KEY: optStr,
 });
 
 export type Env = z.infer<typeof schema>;

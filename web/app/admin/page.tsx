@@ -2,9 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserWithRole } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { ApplicationStatus } from "@/lib/database.types";
 
 export const metadata = { title: "Admin · Applications" };
 export const dynamic = "force-dynamic";
+
+const STATUSES = ["received", "reviewing", "accepted", "rejected", "withdrawn"] as const;
+
+function asStatus(s: string | undefined): ApplicationStatus | null {
+  return (STATUSES as readonly string[]).includes(s ?? "") ? (s as ApplicationStatus) : null;
+}
 
 type Row = {
   id: string;
@@ -31,9 +38,10 @@ export default async function AdminApplicationsPage({
     .select("id, full_name, email, phone, course_slug, study_mode, status, created_at")
     .order("created_at", { ascending: false })
     .limit(200);
-  if (searchParams.status) query = query.eq("status", searchParams.status);
-  const { data, error } = await query;
-  const rows = (data ?? []) as Row[];
+  const statusFilter = asStatus(searchParams.status);
+  if (statusFilter) query = query.eq("status", statusFilter);
+  const { data, error } = await query.returns<Row[]>();
+  const rows = data ?? [];
 
   const counts = await statusCounts();
 
@@ -47,13 +55,13 @@ export default async function AdminApplicationsPage({
             <p className="text-sm text-ink-3">{rows.length} shown · most recent first</p>
           </div>
           <div className="flex flex-wrap gap-1 rounded-md border border-paper-3 bg-white p-1 text-[12px]">
-            <Filter label="All" href="/admin" active={!searchParams.status} count={counts.total} />
-            {(["received", "reviewing", "accepted", "rejected", "withdrawn"] as const).map((s) => (
+            <Filter label="All" href="/admin" active={!statusFilter} count={counts.total} />
+            {STATUSES.map((s) => (
               <Filter
                 key={s}
                 label={s}
                 href={`/admin?status=${s}`}
-                active={searchParams.status === s}
+                active={statusFilter === s}
                 count={counts[s] ?? 0}
               />
             ))}

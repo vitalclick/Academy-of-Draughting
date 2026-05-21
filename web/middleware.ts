@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .maybeSingle();
+      .maybeSingle<{ role: string }>();
     if (profile?.role !== "admin") {
       const home = request.nextUrl.clone();
       home.pathname = "/";
