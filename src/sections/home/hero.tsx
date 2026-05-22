@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { ImageSlot } from '@/components/ui/image-slot';
+import { HeroHeadline } from './hero-headline';
+import { ApplyCta } from '@/components/personalization/apply-cta';
 
 function BlueprintDeco() {
   return (
@@ -44,37 +46,15 @@ export function HomeHero() {
     <section className="home-hero" data-screen-label="01 Hero">
       <div className="page hero-inner">
         <div className="hero-left">
-          <div className="hero-eyebrow">
-            <span className="pill pill-blue-dark">
-              <span className="dot" />
-              EST. 1981 · SOUTH AFRICA
-            </span>
-            <span className="t-mono-xs" style={{ color: 'var(--ink-on-dark-3)' }}>
-              SAQA 66881 · DHET · QCTO
-            </span>
-          </div>
-
-          <h1 className="hero-title">
-            Engineering careers <span className="accent">start here.</span>
-          </h1>
-
-          <p className="hero-sub">
-            Specialist draughting and CAD education, aligned to real engineering and design office
-            environments. Since 1981 — nationally examined, industry-built, job-ready.
-          </p>
+          <HeroHeadline />
 
           <div className="hero-ctas">
-            <Link href="/apply" className="btn btn-lg btn-primary">
-              Apply Now{' '}
-              <span className="arr" aria-hidden="true">
-                →
-              </span>
-            </Link>
+            <ApplyCta size="lg" className="btn-primary" />
             <Link href="/courses" className="btn btn-lg btn-ghost-dark">
               Explore programmes
             </Link>
-            <Link href="/about" className="btn btn-lg btn-ghost-dark">
-              About us
+            <Link href="/career/quiz" className="btn btn-lg btn-ghost-dark">
+              Take the recommender
             </Link>
           </div>
 

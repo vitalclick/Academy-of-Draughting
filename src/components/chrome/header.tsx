@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Logo } from './logo';
 import { useAida } from './aida-context';
 import { NAV_ITEMS, SITE, type NavKey } from '@/lib/site';
+import { ApplyCta } from '@/components/personalization/apply-cta';
 
 export function SiteHeader({
   active = 'home',
@@ -71,12 +72,7 @@ export function SiteHeader({
           >
             <span>Admissions Chat</span>
           </button>
-          <Link href="/apply" className="btn btn-sm btn-primary">
-            Apply Now{' '}
-            <span className="arr" aria-hidden="true">
-              →
-            </span>
-          </Link>
+          <ApplyCta size="sm" className="btn-primary" />
         </div>
 
         <button

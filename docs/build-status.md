@@ -162,8 +162,58 @@
   - `POST /api/applications/ocr` validates multipart and returns empty fields
   - Invalid payloads → 400; rate limit returns 429 with `Retry-After`
 
+## Phase 4 — Personalization & conversion ✓
+### Visitor segmentation
+- `src/lib/personalization/segment.ts` — pure inference from UTM + referrer +
+  device + history, persisted to localStorage with 30-day TTL
+- Six segments: `matric`, `career_changer`, `working_pro`, `parent`,
+  `returning`, `unknown`
+- `?debug=personalization` query param renders a live overlay showing the
+  segment, signals, anon ID, and experiment assignments — invaluable for
+  marketing QA without writing internal tools
+
+### A/B test harness
+- `src/lib/personalization/experiments.ts` — deterministic FNV-1a hash of
+  `anonId::experimentKey` mod variants.length → stable bucket without a
+  server round-trip
+- Two experiments registered:
+  - `home_hero_headline` × 3 — copy variants per segment
+  - `apply_cta_label` × 3 — "Apply Now" vs "Start application" vs "Check
+    eligibility" across all CTA placements
+- `experiment_exposed` and `apply_cta_clicked` events fire to `/api/events`
+  for funnel analysis
+- Optional `force` field lets you pin a variant during ramps or rollbacks
+
+### Personalized content
+- `HeroHeadline` ships a 6 segments × 3 variants = 18-headline matrix on the
+  home hero (eyebrow, title, sub) — every combination is hand-written, no
+  fabricated copy
+- `ApplyCta` is a drop-in replacement that swaps label by experiment variant
+  and reports both exposure and click events; used in chrome and hero
+- All personalization fails safe to the `unknown::careers_start` cell
+
+### Exit-intent capture
+- `src/components/personalization/exit-intent.tsx` — fires on mouse-leave
+  through the top of the viewport, desktop only, ≥8 s after pageload, max
+  once per 14 days per visitor
+- Per-segment lead-magnet copy (matric / career-changer / working-pro /
+  parent / returning / fallback)
+- `POST /api/leads` validates the email, upserts the applicant, fires the
+  lead-magnet email via Resend and an internal alert, logs a `lead_captured`
+  event — graceful no-op for email when Resend isn't configured
+- 5 leads/minute/IP rate limit; events logged whether email succeeds or not
+
+### Tests passed
+- `npm run build` ✓ — **28 routes** (`/api/leads` added)
+- `npm run lint` clean
+- Smoke tests:
+  - `POST /api/leads` valid → 200 + applicant row + event
+  - Bad email → 400
+  - Burst > capacity → 429 with `Retry-After`
+  - Home page renders the personalization provider, exit-intent mount,
+    and `?utm_campaign=…` still returns 200
+
 ## Pending phases
-- **Phase 4** — Personalization & conversion experiments
 - **Phase 5** — Admin + AI Content Studio (CMS)
 - **Phase 6** — Hardening, security review, launch
 
