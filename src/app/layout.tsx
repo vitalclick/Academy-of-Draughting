@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { AidaProvider } from '@/components/chrome/aida-context';
 import { AidaWidget } from '@/components/chrome/aida-widget';
 import { CookieBanner } from '@/components/chrome/cookie-banner';
+import { Analytics } from '@/components/chrome/analytics';
 import { OrganizationJsonLd } from '@/seo/json-ld';
 import { SITE } from '@/lib/site';
 import './globals.css';
@@ -81,6 +82,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <AidaWidget />
           <CookieBanner />
+          <Analytics
+            gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
+            pixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID}
+          />
         </AidaProvider>
       </body>
     </html>

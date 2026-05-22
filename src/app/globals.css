@@ -53,6 +53,48 @@
   .cookie-banner { grid-template-columns: 1fr; }
 }
 
+/* Application status page */
+.status-card {
+  background: var(--white);
+  border: 1px solid var(--line-on-light-2);
+  border-radius: var(--r-lg);
+  padding: 32px;
+}
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-on-light-2);
+  font-size: 14.5px;
+}
+.status-row:first-child { border-top: 0; padding-top: 0; }
+.status-row .t-mono-xs { color: var(--ink-4); }
+.status-row strong { font-weight: 500; color: var(--ink); }
+.status-progress {
+  height: 8px;
+  background: var(--paper);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.status-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue-500), var(--cyan-500));
+  transition: width .35s var(--ease-out);
+}
+
+/* Apply form server feedback */
+.apply-banner {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.apply-banner-error { background: rgba(214,49,45,0.06); border: 1px solid rgba(214,49,45,0.3); color: #8B1F1B; }
+.apply-banner-success { background: rgba(61,217,214,0.08); border: 1px solid rgba(61,217,214,0.32); color: var(--ink); }
+.apply-field-error { color: #B0392E; font-size: 12.5px; margin-top: 4px; display: block; }
+
 /* Legal pages */
 .legal-prose h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.015em; margin: 32px 0 12px; }
 .legal-prose h3 { font-size: 18px; font-weight: 500; margin: 24px 0 8px; }

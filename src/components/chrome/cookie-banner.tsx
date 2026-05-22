@@ -23,6 +23,7 @@ export function CookieBanner() {
         STORAGE_KEY,
         JSON.stringify({ choice, at: new Date().toISOString() })
       );
+      window.dispatchEvent(new CustomEvent('aoad:consent-change', { detail: { choice } }));
     } catch {
       // ignore
     }
