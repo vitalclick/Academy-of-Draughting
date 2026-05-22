@@ -53,6 +53,197 @@
   .cookie-banner { grid-template-columns: 1fr; }
 }
 
+/* Legal pages */
+.legal-prose h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.015em; margin: 32px 0 12px; }
+.legal-prose h3 { font-size: 18px; font-weight: 500; margin: 24px 0 8px; }
+.legal-prose p, .legal-prose li { font-size: 15.5px; line-height: 1.65; color: var(--ink-2); }
+.legal-prose ul { padding-left: 22px; }
+.legal-prose li { margin-bottom: 6px; }
+.legal-prose a { color: var(--blue-600); text-decoration: underline; }
+.legal-prose strong { font-weight: 500; color: var(--ink); }
+
+/* Contact */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+.contact-card {
+  background: var(--white);
+  border: 1px solid var(--line-on-light-2);
+  border-radius: var(--r-lg);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.contact-card h3 {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.018em;
+  margin: 0;
+}
+.contact-card .t-mono-xs { color: var(--blue-500); }
+.contact-card p { color: var(--ink-3); font-size: 14.5px; line-height: 1.55; margin: 0; }
+.contact-card a { color: var(--blue-600); text-decoration: underline; }
+
+/* Career hub */
+.career-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+.career-card {
+  background: var(--white);
+  border: 1px solid var(--line-on-light-2);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.career-card h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.012em;
+}
+.career-card-median {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin: 4px 0;
+}
+.career-card-stat { display: flex; flex-direction: column; gap: 2px; }
+.career-card-soft { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Course detail page */
+.course-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+.course-module-card {
+  border: 1px solid var(--line-on-light-2);
+  border-radius: var(--r);
+  padding: 20px;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color .18s var(--ease-out);
+}
+.course-module-card:hover { border-color: var(--blue-300); }
+.course-module-ix {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-xs);
+  letter-spacing: 0.08em;
+  color: var(--blue-500);
+}
+.course-module-card h3 {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.course-outcomes-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .course-outcomes-grid { grid-template-columns: 1fr; gap: 32px; }
+}
+.course-outcomes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.course-outcomes-list li {
+  padding: 14px 18px;
+  background: var(--white);
+  border: 1px solid var(--line-on-light-2);
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  position: relative;
+  padding-left: 36px;
+}
+.course-outcomes-list li::before {
+  content: '→';
+  position: absolute;
+  left: 16px;
+  color: var(--blue-500);
+  font-family: var(--font-mono);
+}
+.course-outcomes-data {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.course-outcomes-data-cell {
+  padding: 18px;
+  background: var(--white);
+  border: 1px solid var(--line-on-light-2);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.course-outcomes-data-cell .t-mono-xs { color: var(--ink-4); }
+.course-outcomes-data-v {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.course-faqs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 800px;
+  margin: 24px auto 0;
+}
+.course-faq {
+  border: 1px solid var(--line-on-light-2);
+  border-radius: var(--r);
+  padding: 0;
+  background: var(--white);
+}
+.course-faq summary {
+  cursor: pointer;
+  padding: 18px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.course-faq summary::after {
+  content: '+';
+  font-family: var(--font-mono);
+  color: var(--blue-500);
+  font-size: 20px;
+}
+.course-faq[open] summary::after { content: '−'; }
+.course-faq p {
+  padding: 0 20px 18px;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
 .footer-link-button {
   background: transparent;
   border: 0;
