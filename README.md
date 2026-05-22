@@ -1,5 +1,33 @@
 # The Academy of Advanced Draughting — AI-Powered Website Redesign
 
+## Status
+
+**Phase 0 + 1 complete** — Next.js 15 + TypeScript + TailwindCSS foundation, with all pages from the prototype ported to real routes, SEO infrastructure in place, and a green CI build. See `docs/build-status.md` for the full phase tracker.
+
+## Running locally
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+npm run typecheck    # tsc --noEmit
+npm run lint         # next lint
+npm run build        # production build
+```
+
+## Project structure
+
+```
+src/
+  app/                # Next.js App Router pages (RSC by default)
+  components/         # chrome (header, footer, AIDA), shared UI
+  sections/           # per-page sections, grouped by route
+  data/               # course catalog and other static content
+  lib/                # site config, constants
+  seo/                # JSON-LD helpers (Organization, Course, FAQ, Breadcrumb)
+  styles/             # preserved design system from the prototype
+UI_Design/            # original prototype kept for reference
+```
+
 ## Overview
 
 The Academy of Advanced Draughting website is being transformed from a traditional informational education website into a modern AI-powered digital ecosystem focused on:
