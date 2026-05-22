@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import '../styles/tokens.css';
+@import '../styles/header.css';
+@import '../styles/footer-aida.css';
+@import '../styles/sections.css';
+@import '../styles/pages.css';
+
+/* Accessibility — skip link */
+.skip-link {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  background: var(--ink);
+  color: var(--white);
+  padding: 12px 16px;
+  border-radius: 0 0 var(--r) 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-sm);
+  z-index: 9999;
+}
+.skip-link:focus {
+  left: 0;
+  outline: 2px solid var(--blue-500);
+}
+
+/* Cookie banner */
+.cookie-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 80;
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--line-on-light);
+  border-radius: var(--r-lg);
+  padding: 18px 20px;
+  box-shadow: 0 18px 40px rgba(7, 27, 59, 0.18);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.cookie-banner-text { font-size: 14px; line-height: 1.5; color: var(--ink-3); }
+.cookie-banner-text strong { color: var(--ink); }
+.cookie-banner-actions { display: flex; gap: 8px; }
+@media (max-width: 640px) {
+  .cookie-banner { grid-template-columns: 1fr; }
+}
+
+.footer-link-button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+.footer-link-button:hover { color: var(--white); }
+
+:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
