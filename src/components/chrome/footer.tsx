@@ -127,6 +127,9 @@ export function SiteFooter() {
             <Link href="/popia" className="t-mono-sm">
               POPIA
             </Link>
+            <Link href="/data-rights" className="t-mono-sm">
+              Data rights
+            </Link>
             <span className="t-mono-sm" style={{ color: 'var(--ink-on-dark-3)' }}>
               v0.1.0
             </span>

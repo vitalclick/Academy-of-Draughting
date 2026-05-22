@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { usePersonalization } from './provider';
 import { track } from '@/lib/analytics/events';
 
 const STORAGE_KEY = 'aoad_exit_intent_v1';
 const SUPPRESS_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
+
+const HIDDEN_ROUTES = ['/admin', '/apply', '/data-rights'];
 
 function suppressed(): boolean {
   if (typeof window === 'undefined') return true;
@@ -62,6 +65,7 @@ const COPY: Record<string, { eyebrow: string; title: string; body: string }> = {
 
 export function ExitIntent() {
   const { ready, segment } = usePersonalization();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -74,10 +78,11 @@ export function ExitIntent() {
     if (!ready) return;
     if (typeof window === 'undefined') return;
     if (window.innerWidth < 900) return;
+    if (HIDDEN_ROUTES.some((p) => pathname?.startsWith(p))) return;
     if (suppressed()) return;
     const t = setTimeout(() => setArmed(true), 8_000);
     return () => clearTimeout(t);
-  }, [ready]);
+  }, [ready, pathname]);
 
   useEffect(() => {
     if (!armed) return;

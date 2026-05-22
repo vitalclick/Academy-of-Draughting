@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getApplicationDetail } from '@/lib/db/admin';
+import { createSignedReadUrl } from '@/lib/supabase/storage';
 import { StatusUpdater } from './status-updater';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,17 @@ export default async function ApplicationDetailPage({
   const detail = await getApplicationDetail(id);
   if (!detail) notFound();
   const { application: a, documents } = detail;
+  const signedUrls = new Map<string, string>();
+  await Promise.all(
+    documents.map(async (d) => {
+      try {
+        const url = await createSignedReadUrl(d.storage_path);
+        if (url) signedUrls.set(d.id, url);
+      } catch {
+        // ignore — link just won't render
+      }
+    })
+  );
 
   return (
     <div>
@@ -88,14 +100,30 @@ export default async function ApplicationDetailPage({
                 </tr>
               </thead>
               <tbody>
-                {documents.map((d) => (
-                  <tr key={d.id}>
-                    <td>{d.kind}</td>
-                    <td className="t-mono-sm">{d.filename}</td>
-                    <td className="t-mono-sm">{(d.bytes / 1024).toFixed(0)} KB</td>
-                    <td className="t-mono-xs">{new Date(d.uploaded_at).toLocaleString('en-ZA')}</td>
-                  </tr>
-                ))}
+                {documents.map((d) => {
+                  const href = signedUrls.get(d.id);
+                  return (
+                    <tr key={d.id}>
+                      <td>{d.kind}</td>
+                      <td className="t-mono-sm">
+                        {href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="admin-link"
+                          >
+                            {d.filename}
+                          </a>
+                        ) : (
+                          d.filename
+                        )}
+                      </td>
+                      <td className="t-mono-sm">{(d.bytes / 1024).toFixed(0)} KB</td>
+                      <td className="t-mono-xs">{new Date(d.uploaded_at).toLocaleString('en-ZA')}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

@@ -1,19 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 const STORAGE_KEY = 'aoad_cookie_consent_v1';
 
+const HIDDEN_ROUTES = ['/admin', '/data-rights/confirm'];
+
 export function CookieBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (HIDDEN_ROUTES.some((p) => pathname?.startsWith(p))) return;
     try {
       if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
     } catch {
       // ignore — storage disabled
     }
-  }, []);
+  }, [pathname]);
 
   if (!visible) return null;
 

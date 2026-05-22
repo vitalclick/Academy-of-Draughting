@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAida } from './aida-context';
 import { track } from '@/lib/analytics/events';
+
+const HIDDEN_ROUTES = ['/admin', '/data-rights/confirm'];
 
 type ToolEffect =
   | { kind: 'cta-apply'; courseId: string; mode?: string }
@@ -219,6 +222,7 @@ function AidaApplyView() {
 
 export function AidaWidget() {
   const aida = useAida();
+  const pathname = usePathname();
   const [tab, setTab] = useState<'chat' | 'match' | 'apply'>('chat');
   const [thread, setThread] = useState<ChatMsg[]>([WELCOME]);
   const [input, setInput] = useState('');
@@ -324,6 +328,8 @@ export function AidaWidget() {
       abortRef.current = null;
     }
   }
+
+  if (HIDDEN_ROUTES.some((p) => pathname?.startsWith(p))) return null;
 
   return (
     <>

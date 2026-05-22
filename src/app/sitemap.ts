@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: '/privacy', priority: 0.2 },
     { url: '/terms', priority: 0.2 },
     { url: '/popia', priority: 0.2 },
+    { url: '/data-rights', priority: 0.3 },
   ];
 
   return [

@@ -14,6 +14,7 @@ import { sendApplicationReceived } from '@/lib/whatsapp/cloud-api';
 import { upsertHubspotContact } from '@/lib/hubspot/contacts';
 import { mintTrackingToken } from '@/lib/auth/tracking-token';
 import { env, publicSiteUrl } from '@/lib/env';
+import { captureError } from '@/lib/observability';
 
 export type SubmitResult =
   | { ok: true; applicationId: string; trackingUrl: string }
@@ -68,7 +69,10 @@ export async function submitApplicationAction(input: unknown): Promise<SubmitRes
 
     return { ok: true, applicationId: application.id, trackingUrl };
   } catch (err) {
-    console.error('[apply.submit]', err);
+    await captureError('apply.submit failed', err, {
+      programme: draft.programme,
+      mode: draft.mode,
+    });
     return { ok: false, error: 'Something went wrong submitting your application.' };
   }
 }
