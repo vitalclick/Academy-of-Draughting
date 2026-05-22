@@ -213,8 +213,59 @@
   - Home page renders the personalization provider, exit-intent mount,
     and `?utm_campaign=…` still returns 200
 
+## Phase 5 — Admin workspace + Content Studio ✓
+### Auth + access control
+- Supabase Auth magic-link sign-in at `/admin/login`
+- `currentAdmin()` gates on Supabase session *and* either an `admins` row
+  OR membership in the `ADMIN_EMAILS` bootstrap allowlist
+- First sign-in via the allowlist auto-inserts the user into `admins`
+- `src/middleware.ts` refreshes the Supabase session cookie on every
+  `/admin/**` and `/api/admin/**` request
+- Route group `(authed)` so the protected shell only wraps protected
+  pages — login + callback inherit the root layout
+
+### Admin pages
+- `/admin` overview: live counts (apps by status, leads, 24h events,
+  content drafts) + recent applications + recent events
+- `/admin/applications` filterable table; `/admin/applications/[id]`
+  detail with applicant info, documents list and a status-update sidebar
+- `/admin/leads`: applicants who never completed an application
+- `/admin/events`: filterable event stream
+- Status changes write `application_status_changed` / `content_state_changed`
+  events with the admin's email attached
+
+### Content Studio
+- Four kinds (blog post, FAQ, testimonial, page section), three states
+  (draft → review → published; archived = soft delete)
+- Editor with AI draft generator using Claude with kind-specific prompts
+  grounded on the same knowledge base as the chatbot
+- Save / publish triggers `revalidatePath` so the public `/blog` route
+  updates immediately
+- AI metadata recorded on every row (`ai_prompt`, `ai_model`)
+
+### Public blog
+- `/blog` index + `/blog/[slug]` post pages, server-rendered, dynamic
+- Breadcrumb + article JSON-LD, OpenGraph metadata, canonical URL
+- Minimal in-house markdown renderer (`src/lib/markdown.ts`)
+- `sitemap.xml` automatically includes every published post
+
+### Database
+- `supabase/migrations/0003_admin.sql`:
+  - `admins` + `is_admin()` RPC
+  - `content_blocks` (kind + state enums, slug uniqueness for blog posts,
+    indexes on `(kind, state, updated_at)`)
+  - RLS: anon reads published `content_blocks`; admins read + write all;
+    admins read/update applications + read applicants/documents/events
+
+### Tests passed
+- `npm run build` ✓ — **38 routes** (5 protected admin pages, 2 new public
+  blog routes, Supabase middleware)
+- `npm run lint` clean
+- Smoke tests: `/admin` → 307 to login, `/admin/login` → 200 with the
+  "Supabase not configured" notice, `/blog` → 200 empty state,
+  `/blog/missing-post` → 404
+
 ## Pending phases
-- **Phase 5** — Admin + AI Content Studio (CMS)
 - **Phase 6** — Hardening, security review, launch
 
 ## How to add a new page

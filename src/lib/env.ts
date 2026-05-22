@@ -40,6 +40,10 @@ const ServerEnvSchema = z.object({
   // Tracking-link JWT signing secret
   TRACKING_TOKEN_SECRET: z.string().optional(),
 
+  // Comma-separated allowlist of admin emails. First-time bootstrap before
+  // the admins table is populated. Empty in production once admins are seeded.
+  ADMIN_EMAILS: z.string().optional(),
+
   // Public analytics
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_META_PIXEL_ID: z.string().optional(),
