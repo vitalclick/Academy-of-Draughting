@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: '/', priority: 1.0 },
     { url: '/courses', priority: 0.9 },
     { url: '/career', priority: 0.8 },
+    { url: '/career/quiz', priority: 0.7 },
     { url: '/about', priority: 0.7 },
     { url: '/apply', priority: 0.9 },
     { url: '/contact', priority: 0.6 },

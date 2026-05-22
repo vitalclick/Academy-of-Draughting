@@ -3,83 +3,87 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useAida } from './aida-context';
+import { track } from '@/lib/analytics/events';
+
+type ToolEffect =
+  | { kind: 'cta-apply'; courseId: string; mode?: string }
+  | { kind: 'cta-handoff'; reason: string }
+  | { kind: 'cta-link'; href: string; label: string };
 
 type ChatMsg = {
   role: 'aida' | 'user';
   text: string;
-  kind?: 'chips' | 'cta';
-  chips?: string[];
-  ctaHref?: string;
-  ctaLabel?: string;
+  effect?: ToolEffect;
+  toolName?: string;
 };
 
-const INITIAL_THREAD: ChatMsg[] = [
-  {
-    role: 'aida',
-    text: "Hi, I'm AIDA — your admissions assistant. Tell me where you are right now and I'll match you to the right pathway.",
-  },
-  {
-    role: 'aida',
-    text: '',
-    kind: 'chips',
-    chips: [
-      "I'm in matric / Grade 11–12",
-      "I'm changing careers",
-      'I want to upgrade my CAD skills',
-      "I'm not sure yet",
-    ],
-  },
+const WELCOME: ChatMsg = {
+  role: 'aida',
+  text: "Hi, I'm AIDA — your admissions assistant. Tell me where you are right now (matric, working, changing careers…) and I'll match you to the right pathway.",
+};
+
+const STARTER_CHIPS = [
+  "I'm in matric / Grade 11–12",
+  "I'm changing careers",
+  'I want to upgrade my CAD skills',
+  'How much do draughtspeople earn in SA?',
 ];
 
-function scriptedReply(text: string): ChatMsg {
-  const t = text.toLowerCase();
-  if (t.includes('matric') || t.includes('grade')) {
-    return {
-      role: 'aida',
-      text: "Good — most matric / Grade 11–12 students start with MDDOP N4/N5 (10 months full-time). It's nationally examined and you don't need prior CAD experience. Want me to start your application?",
-      kind: 'chips',
-      chips: ['Start application', 'See MDDOP details', 'Bridging course?'],
-    };
+function CtaForEffect({
+  effect,
+  onClose,
+}: {
+  effect: ToolEffect;
+  onClose: () => void;
+}) {
+  if (effect.kind === 'cta-apply') {
+    return (
+      <Link
+        href={`/apply?course=${effect.courseId}${effect.mode ? `&mode=${effect.mode}` : ''}`}
+        className="btn btn-sm btn-primary"
+        style={{ marginTop: 10 }}
+        onClick={onClose}
+      >
+        Open application →
+      </Link>
+    );
   }
-  if (t.includes('career') || t.includes('chang')) {
-    return {
-      role: 'aida',
-      text: 'Career changers usually do well in our part-time MDDOP (18 months) or the Bridging Course if maths is rusty. I can map your background to a path — paste your current role or upload your CV.',
-      kind: 'chips',
-      chips: ['Upload CV', 'Take career quiz', 'Talk to admissions'],
-    };
+  if (effect.kind === 'cta-link') {
+    return (
+      <Link
+        href={effect.href}
+        className="btn btn-sm btn-ghost-dark"
+        style={{ marginTop: 10 }}
+        onClick={onClose}
+      >
+        {effect.label} →
+      </Link>
+    );
   }
-  if (
-    t.includes('cad') ||
-    t.includes('autocad') ||
-    t.includes('revit') ||
-    t.includes('inventor')
-  ) {
-    return {
-      role: 'aida',
-      text: 'For working professionals upgrading CAD, the short courses are usually right — AutoCAD, Revit, or Inventor. Flexible schedules, industry-standard software, practical project work. Which software is your priority?',
-      kind: 'chips',
-      chips: ['AutoCAD', 'Revit', 'Inventor', 'All three'],
-    };
+  if (effect.kind === 'cta-handoff') {
+    return (
+      <Link
+        href="/contact"
+        className="btn btn-sm btn-ghost-dark"
+        style={{ marginTop: 10 }}
+        onClick={onClose}
+      >
+        Talk to a human →
+      </Link>
+    );
   }
-  if (t.includes('apply') || t.includes('start')) {
-    return {
-      role: 'aida',
-      text: "Let's start your application. It's a 4-step process — about 6 minutes. I'll prefill what I can from our chat.",
-      kind: 'cta',
-      ctaHref: '/apply',
-      ctaLabel: 'Open application →',
-    };
-  }
-  return {
-    role: 'aida',
-    text: "Tell me a bit more — your background, what you want to draw (mechanical, architectural, civil), or where you'd like to study (Johannesburg, Durban, online).",
-    kind: 'chips',
-    chips: ['Mechanical', 'Architectural', 'Civil', 'Online study'],
-  };
+  return null;
 }
 
-function AidaMessage({ m, onChip }: { m: ChatMsg; onChip: (s: string) => void }) {
+function AidaMessage({
+  m,
+  onChip,
+  onClose,
+}: {
+  m: ChatMsg & { chips?: string[] };
+  onChip: (s: string) => void;
+  onClose: () => void;
+}) {
   return (
     <div className={`aida-msg ${m.role === 'user' ? 'aida-msg-user' : 'aida-msg-ai'}`}>
       {m.role !== 'user' && (
@@ -88,8 +92,13 @@ function AidaMessage({ m, onChip }: { m: ChatMsg; onChip: (s: string) => void })
         </span>
       )}
       <div className="aida-bubble">
-        {m.text && <p>{m.text}</p>}
-        {m.kind === 'chips' && m.chips && (
+        {m.text && (
+          <p style={{ whiteSpace: 'pre-wrap' }}>
+            {m.text}
+            {/* show a blinking caret while AIDA is streaming */}
+          </p>
+        )}
+        {m.chips && m.chips.length > 0 && (
           <div className="aida-chips">
             {m.chips.map((c) => (
               <button key={c} type="button" className="aida-chip" onClick={() => onChip(c)}>
@@ -98,11 +107,7 @@ function AidaMessage({ m, onChip }: { m: ChatMsg; onChip: (s: string) => void })
             ))}
           </div>
         )}
-        {m.kind === 'cta' && m.ctaHref && (
-          <Link href={m.ctaHref} className="btn btn-sm btn-primary" style={{ marginTop: 10 }}>
-            {m.ctaLabel}
-          </Link>
-        )}
+        {m.effect && <CtaForEffect effect={m.effect} onClose={onClose} />}
       </div>
     </div>
   );
@@ -117,12 +122,7 @@ function AidaMatchView() {
     },
     {
       q: 'What draws you most?',
-      opts: [
-        'Mechanical & manufacturing',
-        'Buildings & architecture',
-        'Civil & structural',
-        'Not sure — surprise me',
-      ],
+      opts: ['Mechanical & manufacturing', 'Buildings & architecture', 'Civil & structural', 'Not sure — surprise me'],
     },
     {
       q: 'Study mode that fits your life?',
@@ -139,8 +139,8 @@ function AidaMatchView() {
           MDDOP N4/N5 — National Certificate
         </h4>
         <p className="t-body-sm" style={{ marginBottom: 12 }}>
-          Strongest match for your profile. Nationally examined (DHET), covers mechanical, civil and
-          architectural draughting with AutoCAD, Revit and Inventor.
+          Strongest match for your profile. Nationally examined (DHET), covers mechanical, civil
+          and architectural draughting with AutoCAD, Revit and Inventor.
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href="/apply" className="btn btn-sm btn-primary">
@@ -220,24 +220,109 @@ function AidaApplyView() {
 export function AidaWidget() {
   const aida = useAida();
   const [tab, setTab] = useState<'chat' | 'match' | 'apply'>('chat');
-  const [thread, setThread] = useState<ChatMsg[]>(INITIAL_THREAD);
+  const [thread, setThread] = useState<ChatMsg[]>([WELCOME]);
   const [input, setInput] = useState('');
-  const [thinking, setThinking] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [pendingEffect, setPendingEffect] = useState<ToolEffect | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
-  }, [thread, thinking]);
+  }, [thread, streaming, streamingText]);
 
-  function send(text: string) {
-    if (!text) return;
-    setThread((t) => [...t, { role: 'user', text }]);
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
+
+  async function send(text: string) {
+    if (!text || streaming) return;
+    track('aida_message_sent', { length: text.length });
+
+    const nextThread: ChatMsg[] = [...thread, { role: 'user' as const, text }];
+    setThread(nextThread);
     setInput('');
-    setThinking(true);
-    setTimeout(() => {
-      setThinking(false);
-      setThread((t) => [...t, scriptedReply(text)]);
-    }, 850);
+    setStreaming(true);
+    setStreamingText('');
+    setPendingEffect(null);
+
+    const apiMessages = nextThread.map((m) => ({
+      role: m.role === 'aida' ? ('assistant' as const) : ('user' as const),
+      content: m.text,
+    }));
+
+    const ctl = new AbortController();
+    abortRef.current = ctl;
+    let buffer = '';
+    let finalText = '';
+    let finalEffect: ToolEffect | null = null;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages }),
+        signal: ctl.signal,
+      });
+      if (res.status === 429) {
+        finalText = "I'm getting a lot of questions right now. Try me again in a few seconds.";
+        setStreamingText(finalText);
+      } else if (!res.ok || !res.body) {
+        finalText = "Something went wrong on my side. Try again, or talk to a human admissions officer.";
+        finalEffect = { kind: 'cta-handoff', reason: 'http_error' };
+        setStreamingText(finalText);
+      } else {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6);
+            try {
+              const ev = JSON.parse(payload) as
+                | { type: 'text'; text: string }
+                | { type: 'effect'; effect: ToolEffect }
+                | { type: 'tool'; name: string }
+                | { type: 'error'; message: string }
+                | { type: 'done' };
+              if (ev.type === 'text') {
+                finalText += ev.text;
+                setStreamingText((s) => s + ev.text);
+              } else if (ev.type === 'effect') {
+                finalEffect = ev.effect;
+                setPendingEffect(ev.effect);
+              } else if (ev.type === 'error') {
+                finalText = finalText || "I hit a snag — let's get you a human.";
+                finalEffect = { kind: 'cta-handoff', reason: ev.message };
+              }
+            } catch {
+              // ignore malformed event
+            }
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        finalText = "Connection dropped. Try again, or jump to WhatsApp.";
+        finalEffect = { kind: 'cta-handoff', reason: 'network' };
+      }
+    } finally {
+      setStreaming(false);
+      setStreamingText('');
+      setPendingEffect(null);
+      if (finalText) {
+        const msg: ChatMsg = { role: 'aida', text: finalText };
+        if (finalEffect) msg.effect = finalEffect;
+        setThread((t) => [...t, msg]);
+      }
+      abortRef.current = null;
+    }
   }
 
   return (
@@ -274,7 +359,7 @@ export function AidaWidget() {
               </span>
               <div className="aida-head-text">
                 <div className="aida-head-name">Admissions · AIDA</div>
-                <div className="aida-head-sub t-mono-xs">ONLINE · &lt;1 MIN AVG REPLY</div>
+                <div className="aida-head-sub t-mono-xs">ONLINE · CLAUDE-POWERED</div>
               </div>
             </div>
             <button
@@ -310,14 +395,34 @@ export function AidaWidget() {
             <>
               <div className="aida-body" ref={bodyRef}>
                 {thread.map((m, i) => (
-                  <AidaMessage key={i} m={m} onChip={send} />
+                  <AidaMessage
+                    key={i}
+                    m={{ ...m, chips: i === 0 && thread.length === 1 ? STARTER_CHIPS : undefined }}
+                    onChip={send}
+                    onClose={() => aida.setOpen(false)}
+                  />
                 ))}
-                {thinking && (
+                {streaming && (
                   <div className="aida-msg aida-msg-ai">
-                    <div className="aida-bubble aida-thinking">
-                      <span />
-                      <span />
-                      <span />
+                    <span className="aida-mini-avatar" aria-hidden="true">
+                      <span className="ai-dot" />
+                    </span>
+                    <div className="aida-bubble">
+                      {streamingText ? (
+                        <p style={{ whiteSpace: 'pre-wrap' }}>
+                          {streamingText}
+                          <span className="aida-cursor" aria-hidden="true" />
+                        </p>
+                      ) : (
+                        <div className="aida-thinking">
+                          <span />
+                          <span />
+                          <span />
+                        </div>
+                      )}
+                      {pendingEffect && (
+                        <CtaForEffect effect={pendingEffect} onClose={() => aida.setOpen(false)} />
+                      )}
                     </div>
                   </div>
                 )}
@@ -331,12 +436,13 @@ export function AidaWidget() {
               >
                 <input
                   type="text"
-                  placeholder="Tell AIDA where you are…"
+                  placeholder={streaming ? 'AIDA is typing…' : 'Tell AIDA where you are…'}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   aria-label="Message"
+                  disabled={streaming}
                 />
-                <button type="submit" aria-label="Send" disabled={!input.trim()}>
+                <button type="submit" aria-label="Send" disabled={!input.trim() || streaming}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M5 12h14M13 6l6 6-6 6"
@@ -349,7 +455,7 @@ export function AidaWidget() {
                 </button>
               </form>
               <div className="aida-foot t-mono-xs">
-                Mock prototype · responses are illustrative
+                AIDA can&apos;t make final admissions decisions. Critical questions go to a human.
               </div>
             </>
           )}

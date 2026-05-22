@@ -119,10 +119,50 @@
   `POST /api/events` → 200 + persistence, `POST /api/applications/documents`
   with bad UUID → 400 with helpful message
 
+## Phase 3 — AI layer v1 ✓
+### AIDA chatbot (Claude-powered)
+- `POST /api/chat` streams SSE: `text | effect | tool | error | done`
+- System prompt grounded on a compiled knowledge base of all programmes +
+  careers (`src/lib/ai/corpus.ts`) — no fabrication of fees or modules
+- Six tools: `lookup_course`, `list_courses`, `get_career_data`,
+  `recommend_pathway`, `start_application`, `hand_off_to_human`
+- Tool-use loop capped at 4 iterations to bound latency + cost
+- Per-IP rate limit via in-memory token bucket (20 msg/min)
+- AIDA widget rewritten to consume the SSE stream and render tool effects as
+  inline CTAs (apply, deep-link, hand-off)
+- Streaming cursor in the bubble while Claude is generating
+- Graceful no-key fallback: streams a single hand-off message
+
+### Programme recommender
+- `POST /api/recommend` — deterministic scoring + Claude-written rationale
+- Page `/career/quiz`: 4-question quiz, ranks top three programmes with bars,
+  CTA chains into the application flow with the course pre-selected via
+  query string
+- Per-IP rate limit (10 runs/min); each run logged to `events`
+
+### Career intelligence dataset
+- `src/data/careers.ts` — six SA draughting careers with median, band,
+  growth, software, top employers, day-to-day, demand
+- Shared by the chatbot (`get_career_data` tool), recommender, and the
+  existing Career Hub page
+
+### Document OCR (Claude vision)
+- `POST /api/applications/ocr` (multipart) — extracts structured JSON from
+  ID or matric images using Haiku 4.5
+- Wired into Apply step 3: uploading an ID auto-fills `idNumber`,
+  `firstName`, `lastName` on step 1; matric uploads fill `matricYear`
+- 6 MB cap, MIME whitelist, per-IP rate limit (6/min)
+
+### Tests passed
+- `npm run build` ✓ — **27 routes** including 5 dynamic API routes
+- `npm run lint` clean
+- Smoke tests with no API key:
+  - `POST /api/chat` streams the fallback SSE
+  - `POST /api/recommend` returns ranked courses with boilerplate rationale
+  - `POST /api/applications/ocr` validates multipart and returns empty fields
+  - Invalid payloads → 400; rate limit returns 429 with `Retry-After`
+
 ## Pending phases
-- **Phase 3** — AI layer v1 (real chatbot via Claude/OpenAI, RAG against
-  course data, real recommender, career-hub data pipeline, OCR for uploaded
-  docs)
 - **Phase 4** — Personalization & conversion experiments
 - **Phase 5** — Admin + AI Content Studio (CMS)
 - **Phase 6** — Hardening, security review, launch

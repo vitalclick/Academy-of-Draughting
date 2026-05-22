@@ -265,14 +265,55 @@ function StepPathway({ form }: { form: Form }) {
   );
 }
 
-function StepDocs({ applicationId }: { applicationId: string | null }) {
+function StepDocs({
+  applicationId,
+  form,
+}: {
+  applicationId: string | null;
+  form: Form;
+}) {
   const [files, setFiles] = useState<{ kind: string; filename: string; bytes: number }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [extracted, setExtracted] = useState<Record<string, unknown> | null>(null);
+
+  async function runOcr(kind: 'id' | 'matric', file: File) {
+    if (!file.type.startsWith('image/')) return; // PDFs are uploaded but not OCR'd here
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('kind', kind);
+      const res = await fetch('/api/applications/ocr', { method: 'POST', body: fd });
+      if (!res.ok) return;
+      const json = (await res.json()) as { ok: boolean; fields?: Record<string, unknown> };
+      if (!json.ok || !json.fields) return;
+      setExtracted((prev) => ({ ...(prev ?? {}), ...json.fields }));
+
+      if (kind === 'id') {
+        const f = json.fields;
+        if (typeof f.id_number === 'string' && /^\d{13}$/.test(f.id_number)) {
+          form.setValue('idNumber', f.id_number, { shouldDirty: true, shouldValidate: true });
+        }
+        if (typeof f.full_name === 'string' && f.full_name.includes(' ')) {
+          const [first, ...rest] = f.full_name.split(' ');
+          if (!form.getValues('firstName')) form.setValue('firstName', first, { shouldDirty: true });
+          if (!form.getValues('lastName')) form.setValue('lastName', rest.join(' '), { shouldDirty: true });
+        }
+      } else if (kind === 'matric') {
+        const f = json.fields;
+        if (typeof f.matric_year === 'string' && /^(19|20)\d{2}$/.test(f.matric_year)) {
+          form.setValue('matricYear', f.matric_year, { shouldDirty: true });
+        }
+      }
+      track('ocr_extracted', { kind, hasFields: true });
+    } catch (err) {
+      console.warn('[ocr] failed', err);
+    }
+  }
 
   async function handleFile(kind: 'id' | 'matric', file: File) {
     if (!applicationId) {
-      setError('Save your details on step 1 before uploading.');
+      setError('Fill in your details on step 1 first — autosave will create your draft.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -320,6 +361,9 @@ function StepDocs({ applicationId }: { applicationId: string | null }) {
 
       setFiles((f) => [...f, { kind, filename: file.name, bytes: file.size }]);
       track('document_uploaded', { kind, bytes: file.size });
+
+      // Kick off OCR in parallel; failures don't block submit
+      void runOcr(kind, file);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -381,8 +425,31 @@ function StepDocs({ applicationId }: { applicationId: string | null }) {
         </div>
       )}
 
+      {extracted && Object.keys(extracted).length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div className="t-mono-xs" style={{ color: 'var(--cyan-500)', marginBottom: 8 }}>
+            ✓ AUTO-EXTRACTED FIELDS · BACK-CHECK ON STEP 1
+          </div>
+          <div className="ocr-parsed">
+            {Object.entries(extracted)
+              .filter(([, v]) => v !== null && v !== undefined && v !== '')
+              .slice(0, 6)
+              .map(([k, v]) => (
+                <div key={k} className="ocr-field">
+                  <span className="ocr-field-k">{k.replace(/_/g, ' ').toUpperCase()}</span>
+                  <span className="ocr-field-v">
+                    {String(v)}
+                    <span className="ocr-check">✓</span>
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       <p className="t-mono-xs" style={{ color: 'var(--ink-4)', marginTop: 18 }}>
-        OCR field extraction runs after submit. You can change documents up to the decision point.
+        OCR runs on each image upload via Claude vision. Field values are merged back into step 1
+        — go review them before submitting.
       </p>
     </>
   );
@@ -699,7 +766,7 @@ export function ApplyForm() {
             >
               {step === 0 && <StepAbout form={form} />}
               {step === 1 && <StepPathway form={form} />}
-              {step === 2 && <StepDocs applicationId={applicationId} />}
+              {step === 2 && <StepDocs applicationId={applicationId} form={form} />}
               {step === 3 && <StepReview form={form} />}
 
               {submitState.kind === 'error' && (

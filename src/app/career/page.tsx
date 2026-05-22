@@ -118,6 +118,29 @@ export default function CareerPage() {
         </div>
       </section>
 
+      <section className="section section-paper" data-screen-label="02 Recommender CTA">
+        <div className="page">
+          <div className="reco-cta">
+            <div>
+              <span className="section-label" style={{ color: 'var(--cyan-500)' }}>
+                <span className="bar" />
+                PROGRAMME RECOMMENDER · POWERED BY CLAUDE
+              </span>
+              <h2 className="t-h2" style={{ margin: '12px 0 12px' }}>
+                Not sure where to start? Take 60 seconds.
+              </h2>
+              <p className="t-body-lg" style={{ marginBottom: 16, maxWidth: 560 }}>
+                Four questions and we&apos;ll score you against the Academy programmes — with a
+                short, plain-English rationale.
+              </p>
+              <Link href="/career/quiz" className="btn btn-lg btn-primary">
+                Start the recommender →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <CareerIntelSection />
 
       <section className="section section-light" data-screen-label="03 Career Cards">

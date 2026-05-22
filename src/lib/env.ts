@@ -29,6 +29,11 @@ const ServerEnvSchema = z.object({
   WHATSAPP_TOKEN: z.string().optional(),
   WHATSAPP_TEMPLATE_NAME: z.string().optional(),
 
+  // Anthropic (Claude) — chatbot, recommender rationale, OCR
+  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_MODEL: z.string().default('claude-sonnet-4-6'),
+  ANTHROPIC_OCR_MODEL: z.string().default('claude-haiku-4-5-20251001'),
+
   // HubSpot CRM
   HUBSPOT_PRIVATE_APP_TOKEN: z.string().optional(),
 
@@ -54,6 +59,7 @@ export const features = {
   resend: Boolean(env.RESEND_API_KEY && env.RESEND_FROM),
   whatsapp: Boolean(env.WHATSAPP_PHONE_ID && env.WHATSAPP_TOKEN),
   hubspot: Boolean(env.HUBSPOT_PRIVATE_APP_TOKEN),
+  ai: Boolean(env.ANTHROPIC_API_KEY),
   trackingTokens: Boolean(env.TRACKING_TOKEN_SECRET),
   analytics: Boolean(env.NEXT_PUBLIC_GA_MEASUREMENT_ID || env.NEXT_PUBLIC_META_PIXEL_ID),
 };
