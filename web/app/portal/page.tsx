@@ -121,6 +121,43 @@ export default async function PortalPage() {
     list.push(p.prerequisite_id);
     prereqsByAssignment.set(p.assignment_id, list);
   }
+  // Rubric breakdown: criteria per assignment + this student's per-criterion
+  // scores, shown under graded assignments.
+  const { data: criteriaRows } = assignmentIds.length
+    ? await supabase
+        .from("rubric_criteria")
+        .select("id, assignment_id, label, max_points, order_index")
+        .in("assignment_id", assignmentIds)
+        .order("order_index", { ascending: true })
+        .returns<{ id: string; assignment_id: string; label: string; max_points: number }[]>()
+    : { data: [] as { id: string; assignment_id: string; label: string; max_points: number }[] };
+  const criteriaByAssignment = new Map<
+    string,
+    { id: string; label: string; max_points: number }[]
+  >();
+  for (const c of criteriaRows ?? []) {
+    const list = criteriaByAssignment.get(c.assignment_id) ?? [];
+    list.push({ id: c.id, label: c.label, max_points: c.max_points });
+    criteriaByAssignment.set(c.assignment_id, list);
+  }
+  const submissionIds = submissions.map((s) => s.id);
+  const { data: critScoreRows } = submissionIds.length
+    ? await supabase
+        .from("submission_criterion_scores")
+        .select("submission_id, criterion_id, points, comment")
+        .in("submission_id", submissionIds)
+        .returns<{ submission_id: string; criterion_id: string; points: number; comment: string | null }[]>()
+    : { data: [] as { submission_id: string; criterion_id: string; points: number; comment: string | null }[] };
+  const critScoresBySubmission = new Map<
+    string,
+    Map<string, { points: number; comment: string | null }>
+  >();
+  for (const cs of critScoreRows ?? []) {
+    const m = critScoresBySubmission.get(cs.submission_id) ?? new Map();
+    m.set(cs.criterion_id, { points: cs.points, comment: cs.comment });
+    critScoresBySubmission.set(cs.submission_id, m);
+  }
+
   const gradedIds = new Set(
     submissions.filter((s) => s.status === "graded").map((s) => s.assignment_id)
   );
@@ -292,6 +329,35 @@ export default async function PortalPage() {
                                           📄 Open assignment brief
                                         </a>
                                       )}
+                                      {sub?.status === "graded" &&
+                                        (() => {
+                                          const crits = criteriaByAssignment.get(a.id) ?? [];
+                                          const scores = sub ? critScoresBySubmission.get(sub.id) : undefined;
+                                          if (!crits.length || !scores) return null;
+                                          return (
+                                            <div className="mt-2 rounded border border-white/10 bg-white/[0.02] p-2 text-[12px]">
+                                              <span className="mono text-[10px] uppercase text-white/45">
+                                                Rubric breakdown
+                                              </span>
+                                              <ul className="mt-1 space-y-0.5">
+                                                {crits.map((c) => {
+                                                  const sc = scores.get(c.id);
+                                                  return (
+                                                    <li
+                                                      key={c.id}
+                                                      className="flex items-baseline justify-between gap-2"
+                                                    >
+                                                      <span className="text-white/70">{c.label}</span>
+                                                      <span className="mono text-white/85">
+                                                        {sc ? sc.points : 0}/{c.max_points}
+                                                      </span>
+                                                    </li>
+                                                  );
+                                                })}
+                                              </ul>
+                                            </div>
+                                          );
+                                        })()}
                                       {sub?.feedback && (
                                         <div className="mt-2 rounded border border-amber-500/20 bg-amber-500/5 p-2 text-[12px] text-amber-100">
                                           <span className="mono text-[10px] uppercase text-amber-300">
