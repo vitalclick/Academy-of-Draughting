@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     .from("assignments")
     .select("id, module_id, modules!inner(course_slug)")
     .eq("id", body.assignmentId)
+    .is("deleted_at", null)
     .maybeSingle<{ id: string; module_id: string; modules: { course_slug: string } }>();
   if (aErr) return NextResponse.json({ error: aErr.message }, { status: 500 });
   if (!assignment) {

@@ -23,6 +23,7 @@ function buildCsp() {
     "https://*.supabase.co",
     "wss://*.supabase.co",
     "https://challenges.cloudflare.com",
+    "https://plausible.io",
     sentryOrigin,
   ]
     .filter(Boolean)
@@ -33,6 +34,7 @@ function buildCsp() {
     "'unsafe-inline'",
     "'unsafe-eval'",
     "https://challenges.cloudflare.com",
+    "https://plausible.io",
   ].join(" ");
 
   const frameSrc = "https://challenges.cloudflare.com";

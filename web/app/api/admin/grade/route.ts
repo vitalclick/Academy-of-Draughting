@@ -8,6 +8,7 @@ import { sendEmail, gradeFeedbackEmail } from "@/lib/email";
 import { env } from "@/lib/env";
 import { courses } from "@/data/courses";
 import { logAudit } from "@/lib/audit";
+import { notifyUser } from "@/lib/notify";
 
 export const runtime = "nodejs";
 
@@ -90,6 +91,20 @@ export async function POST(req: Request) {
       }),
     });
   }
+
+  await notifyUser({
+    userId: data.user_id,
+    kind: data.status === "graded" ? "submission.graded" : "submission.returned",
+    title:
+      data.status === "graded"
+        ? `${data.assignments.title} — graded`
+        : `${data.assignments.title} — returned for revision`,
+    body:
+      data.score != null
+        ? `${data.score}/${data.assignments.max_score}`
+        : null,
+    link: "/portal",
+  });
 
   await logAudit({
     action: "submission.graded",

@@ -42,6 +42,10 @@ const schema = z.object({
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: optStr,
   TURNSTILE_SECRET_KEY: optStr,
   RESEND_WEBHOOK_SECRET: optStr,
+
+  // Privacy-friendly analytics (cookieless). When unset, the script is not
+  // injected and no requests leave the browser.
+  NEXT_PUBLIC_PLAUSIBLE_DOMAIN: optStr,
 });
 
 export type Env = z.infer<typeof schema>;

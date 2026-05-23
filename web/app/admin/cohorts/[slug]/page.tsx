@@ -44,6 +44,7 @@ export default async function CohortDetailPage({ params }: Params) {
       .from("modules")
       .select("id, course_slug, title, description, order_index, created_at")
       .eq("course_slug", params.slug)
+      .is("deleted_at", null)
       .order("order_index", { ascending: true })
       .returns<Module[]>(),
   ]);
@@ -69,8 +70,9 @@ export default async function CohortDetailPage({ params }: Params) {
   const { data: assignmentsData } = moduleIds.length
     ? await supabase
         .from("assignments")
-        .select("id, module_id, title, description, due_at, max_score, order_index, created_at")
+        .select("id, module_id, title, description, due_at, max_score, order_index, created_at, release_offset_days, due_offset_days, brief_storage_path, late_penalty_pct_per_day, late_grace_days")
         .in("module_id", moduleIds)
+        .is("deleted_at", null)
         .order("order_index", { ascending: true })
         .returns<Assignment[]>()
     : { data: [] as Assignment[] };
@@ -226,6 +228,10 @@ export default async function CohortDetailPage({ params }: Params) {
                                     initialFeedback={sub.feedback}
                                     initialStatus={sub.status}
                                     maxScore={a.max_score}
+                                    dueAt={a.due_at}
+                                    submittedAt={sub.submitted_at}
+                                    latePenaltyPctPerDay={a.late_penalty_pct_per_day}
+                                    lateGraceDays={a.late_grace_days}
                                   />
                                 ) : (
                                   <div className="mt-2 text-[11px] text-ink-4">

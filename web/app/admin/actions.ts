@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { sendEmail, enrollmentWelcomeEmail } from "@/lib/email";
 import { courses } from "@/data/courses";
 import { logAudit } from "@/lib/audit";
+import { notifyUser } from "@/lib/notify";
 import type { Database } from "@/lib/database.types";
 
 type ModuleUpdate = Database["public"]["Tables"]["modules"]["Update"];
@@ -83,6 +84,20 @@ export async function setApplicationStatus(id: string, status: string) {
         cohortLabel: enrollment?.cohort_label ?? null,
         portalUrl: portalUrl(),
       }),
+    });
+    await notifyUser({
+      userId: existing.user_id,
+      kind: "enrollment.welcome",
+      title: `You're enrolled in ${courseTitle(existing.course_slug)}`,
+      body: "Your modules and assignments are ready in the portal.",
+      link: "/portal",
+    });
+  } else if (existing.user_id && existing.status !== parsed.data) {
+    await notifyUser({
+      userId: existing.user_id,
+      kind: "application.status",
+      title: `Your application status is now ${parsed.data}`,
+      link: "/portal",
     });
   }
 
@@ -174,6 +189,14 @@ export async function manualEnroll(args: {
     }),
   });
 
+  await notifyUser({
+    userId: profile.id,
+    kind: "enrollment.welcome",
+    title: `You're enrolled in ${courseTitle(courseSlug)}`,
+    body: cohortLabel ? `Cohort: ${cohortLabel}` : null,
+    link: "/portal",
+  });
+
   await logAudit({
     action: "enrollment.created",
     entityType: "enrollment",
@@ -260,11 +283,23 @@ export async function deleteModule(id: string) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("modules")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
     .select("course_slug")
     .single();
   if (error) throw new Error(error.message);
+  // Soft-cascade: also hide assignments under this module so students stop
+  // seeing them, without destroying student submissions.
+  await supabase
+    .from("assignments")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("module_id", id);
+  await logAudit({
+    action: "module.soft_deleted",
+    entityType: "module",
+    entityId: id,
+    details: { course_slug: data.course_slug },
+  });
   revalidatePath(`/admin/curriculum/${data.course_slug}`);
   revalidatePath("/admin/curriculum");
 }
@@ -334,11 +369,17 @@ export async function deleteAssignment(id: string) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("assignments")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
     .select("modules!inner(course_slug)")
     .single<{ modules: { course_slug: string } }>();
   if (error) throw new Error(error.message);
+  await logAudit({
+    action: "assignment.soft_deleted",
+    entityType: "assignment",
+    entityId: id,
+    details: { course_slug: data.modules.course_slug },
+  });
   revalidatePath(`/admin/curriculum/${data.modules.course_slug}`);
 }
 

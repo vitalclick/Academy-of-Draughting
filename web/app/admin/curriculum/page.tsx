@@ -15,10 +15,12 @@ export default async function CurriculumIndex() {
   const { data: modulesData } = await supabase
     .from("modules")
     .select("id, course_slug")
+    .is("deleted_at", null)
     .returns<{ id: string; course_slug: string }[]>();
   const { data: assignmentsData } = await supabase
     .from("assignments")
     .select("id, module_id, modules!inner(course_slug)")
+    .is("deleted_at", null)
     .returns<{ id: string; module_id: string; modules: { course_slug: string } }[]>();
 
   const moduleCount = new Map<string, number>();

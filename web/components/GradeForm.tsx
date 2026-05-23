@@ -9,7 +9,27 @@ type Props = {
   initialFeedback: string | null;
   initialStatus: "draft" | "submitted" | "graded" | "returned";
   maxScore: number;
+  // Late-penalty context (all optional — penalty suggestion is hidden when
+  // any are missing).
+  dueAt?: string | null;
+  submittedAt?: string | null;
+  latePenaltyPctPerDay?: number | null;
+  lateGraceDays?: number | null;
 };
+
+function latePenaltyInfo(
+  due: string | null | undefined,
+  submitted: string | null | undefined,
+  pct: number | null | undefined,
+  grace: number | null | undefined
+): { daysLate: number; penaltyPct: number; multiplier: number } | null {
+  if (!due || !submitted || !pct || pct <= 0) return null;
+  const days = Math.floor((+new Date(submitted) - +new Date(due)) / 86_400_000);
+  const chargeable = Math.max(0, days - (grace ?? 0));
+  if (chargeable <= 0) return null;
+  const penaltyPct = Math.min(100, chargeable * pct);
+  return { daysLate: days, penaltyPct, multiplier: 1 - penaltyPct / 100 };
+}
 
 export function GradeForm({
   submissionId,
@@ -17,7 +37,12 @@ export function GradeForm({
   initialFeedback,
   initialStatus,
   maxScore,
+  dueAt,
+  submittedAt,
+  latePenaltyPctPerDay,
+  lateGraceDays,
 }: Props) {
+  const late = latePenaltyInfo(dueAt, submittedAt, latePenaltyPctPerDay, lateGraceDays);
   const router = useRouter();
   const [score, setScore] = useState<string>(initialScore?.toString() ?? "");
   const [feedback, setFeedback] = useState(initialFeedback ?? "");
@@ -109,6 +134,25 @@ export function GradeForm({
           </button>
         </div>
       </div>
+      {late && (
+        <div className="mt-2 flex items-center justify-between rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800">
+          <span>
+            {late.daysLate}d late · suggested penalty −{late.penaltyPct.toFixed(0)}%
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const raw = score.trim() === "" ? maxScore : Number(score);
+              if (Number.isNaN(raw)) return;
+              const adjusted = Math.max(0, Math.round(raw * late.multiplier));
+              setScore(String(adjusted));
+            }}
+            className="mono rounded border border-amber-400 px-2 py-0.5 text-[10px] text-amber-800 hover:bg-amber-100"
+          >
+            Apply
+          </button>
+        </div>
+      )}
       {error && <p className="mt-2 text-red-600">{error}</p>}
     </div>
   );

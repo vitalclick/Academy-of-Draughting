@@ -87,6 +87,7 @@ export default async function PortalPage() {
         .from("modules")
         .select("id, course_slug, title, description, order_index, created_at")
         .in("course_slug", courseSlugs)
+        .is("deleted_at", null)
         .order("order_index", { ascending: true })
         .returns<Module[]>()
     : { data: [] as Module[] };
@@ -96,8 +97,9 @@ export default async function PortalPage() {
   const { data: assignmentsData } = moduleIds.length
     ? await supabase
         .from("assignments")
-        .select("id, module_id, title, description, due_at, max_score, order_index, created_at, release_offset_days, due_offset_days")
+        .select("id, module_id, title, description, due_at, max_score, order_index, created_at, release_offset_days, due_offset_days, brief_storage_path, late_penalty_pct_per_day, late_grace_days")
         .in("module_id", moduleIds)
+        .is("deleted_at", null)
         .order("order_index", { ascending: true })
         .returns<Assignment[]>()
     : { data: [] as Assignment[] };
@@ -250,6 +252,16 @@ export default async function PortalPage() {
                                         <p className="mt-2 text-[12px] text-white/55">
                                           {a.description}
                                         </p>
+                                      )}
+                                      {a.brief_storage_path && (
+                                        <a
+                                          href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/assignment-briefs/${a.brief_storage_path}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="mono mt-2 inline-block text-[11px] text-electric-300 hover:underline"
+                                        >
+                                          📄 Open assignment brief
+                                        </a>
                                       )}
                                       {sub?.feedback && (
                                         <div className="mt-2 rounded border border-amber-500/20 bg-amber-500/5 p-2 text-[12px] text-amber-100">

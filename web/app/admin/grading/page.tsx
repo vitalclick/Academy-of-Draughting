@@ -14,6 +14,9 @@ type Row = Submission & {
   assignments: {
     title: string;
     max_score: number;
+    due_at: string | null;
+    late_penalty_pct_per_day: number | null;
+    late_grace_days: number | null;
     modules: { title: string; course_slug: string };
   };
 };
@@ -30,7 +33,7 @@ export default async function GradingQueuePage({
   let query = supabase
     .from("submissions")
     .select(
-      "id, assignment_id, user_id, status, storage_path, notes, score, feedback, submitted_at, graded_at, created_at, updated_at, assignments!inner(title, max_score, modules!inner(title, course_slug))"
+      "id, assignment_id, user_id, status, storage_path, notes, score, feedback, submitted_at, graded_at, created_at, updated_at, assignments!inner(title, max_score, due_at, late_penalty_pct_per_day, late_grace_days, modules!inner(title, course_slug))"
     )
     .eq("status", "submitted")
     .order("submitted_at", { ascending: true })
@@ -140,6 +143,10 @@ export default async function GradingQueuePage({
                     initialFeedback={sub.feedback}
                     initialStatus={sub.status}
                     maxScore={sub.assignments.max_score}
+                    dueAt={sub.assignments.due_at}
+                    submittedAt={sub.submitted_at}
+                    latePenaltyPctPerDay={sub.assignments.late_penalty_pct_per_day}
+                    lateGraceDays={sub.assignments.late_grace_days}
                   />
                 </article>
               );

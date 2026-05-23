@@ -187,6 +187,7 @@ export interface Database {
           description: string | null;
           order_index: number;
           created_at: string;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -195,6 +196,7 @@ export interface Database {
           description?: string | null;
           order_index?: number;
           created_at?: string;
+          deleted_at?: string | null;
         };
         Update: {
           id?: string;
@@ -203,6 +205,7 @@ export interface Database {
           description?: string | null;
           order_index?: number;
           created_at?: string;
+          deleted_at?: string | null;
         };
         Relationships: [];
       };
@@ -255,6 +258,10 @@ export interface Database {
           created_at: string;
           release_offset_days: number | null;
           due_offset_days: number | null;
+          deleted_at: string | null;
+          brief_storage_path: string | null;
+          late_penalty_pct_per_day: number | null;
+          late_grace_days: number | null;
         };
         Insert: {
           id?: string;
@@ -267,6 +274,10 @@ export interface Database {
           created_at?: string;
           release_offset_days?: number | null;
           due_offset_days?: number | null;
+          deleted_at?: string | null;
+          brief_storage_path?: string | null;
+          late_penalty_pct_per_day?: number | null;
+          late_grace_days?: number | null;
         };
         Update: {
           id?: string;
@@ -279,6 +290,10 @@ export interface Database {
           created_at?: string;
           release_offset_days?: number | null;
           due_offset_days?: number | null;
+          deleted_at?: string | null;
+          brief_storage_path?: string | null;
+          late_penalty_pct_per_day?: number | null;
+          late_grace_days?: number | null;
         };
         Relationships: [
           {
@@ -428,6 +443,100 @@ export interface Database {
           ip?: string | null;
         };
         Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: string;
+          title: string;
+          body: string | null;
+          link: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind: string;
+          title: string;
+          body?: string | null;
+          link?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          kind?: string;
+          title?: string;
+          body?: string | null;
+          link?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          scope_type: "admissions" | "tutor";
+          scope_id: string | null;
+          title: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          scope_type: "admissions" | "tutor";
+          scope_id?: string | null;
+          title?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          scope_type?: "admissions" | "tutor";
+          scope_id?: string | null;
+          title?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          role: "user" | "assistant";
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          role: "user" | "assistant";
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          role?: "user" | "assistant";
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            referencedRelation: "ai_conversations";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       email_deliveries: {
         Row: {

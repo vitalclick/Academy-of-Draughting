@@ -9,6 +9,7 @@ import {
   updateAssignment,
   deleteAssignment,
 } from "@/app/admin/actions";
+import { BriefUploader } from "@/components/BriefUploader";
 import type { Assignment, Module } from "@/lib/database.types";
 
 // -- Module editor -----------------------------------------------------------
@@ -403,27 +404,34 @@ export function AssignmentRow({ assignment }: { assignment: Assignment }) {
 
   if (!editing) {
     return (
-      <li className="flex items-baseline justify-between gap-3 rounded border border-paper-3 bg-white px-3 py-2">
-        <div className="min-w-0">
-          <div className="text-sm text-ink-1">
-            <span className="mono text-[10px] text-ink-4">#{assignment.order_index}</span>{" "}
-            {assignment.title}
+      <li className="rounded border border-paper-3 bg-white px-3 py-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-sm text-ink-1">
+              <span className="mono text-[10px] text-ink-4">#{assignment.order_index}</span>{" "}
+              {assignment.title}
+            </div>
+            <div className="mono text-[11px] text-ink-4">
+              max {assignment.max_score}
+              {assignment.due_at && (
+                <> · due {new Date(assignment.due_at).toLocaleDateString()}</>
+              )}
+              {assignment.late_penalty_pct_per_day != null &&
+                assignment.late_penalty_pct_per_day > 0 && (
+                  <> · {assignment.late_penalty_pct_per_day}%/d late</>
+                )}
+            </div>
           </div>
-          <div className="mono text-[11px] text-ink-4">
-            max {assignment.max_score}
-            {assignment.due_at && (
-              <> · due {new Date(assignment.due_at).toLocaleDateString()}</>
-            )}
+          <div className="flex gap-2 text-[11px]">
+            <button onClick={() => setEditing(true)} className="text-ink-3 hover:text-ink-1">
+              Edit
+            </button>
+            <button onClick={remove} disabled={pending} className="text-red-600 hover:text-red-500">
+              Delete
+            </button>
           </div>
         </div>
-        <div className="flex gap-2 text-[11px]">
-          <button onClick={() => setEditing(true)} className="text-ink-3 hover:text-ink-1">
-            Edit
-          </button>
-          <button onClick={remove} disabled={pending} className="text-red-600 hover:text-red-500">
-            Delete
-          </button>
-        </div>
+        <BriefUploader assignmentId={assignment.id} currentPath={assignment.brief_storage_path} />
       </li>
     );
   }

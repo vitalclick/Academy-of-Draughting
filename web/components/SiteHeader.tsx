@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getUserWithRole } from "@/lib/supabase/server";
 import { hasSupabasePublic, env } from "@/lib/env";
 import { HeaderMobile } from "@/components/HeaderMobile";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 const NAV = [
   { href: "/about", label: "About" },
@@ -49,10 +50,13 @@ export async function SiteHeader() {
             </Link>
           )}
           {user ? (
-            <form action="/auth/signout" method="post" className="contents">
-              <span className="text-[12px] text-ink-3">{user.user.email}</span>
-              <button type="submit" className="btn-ghost">Sign out</button>
-            </form>
+            <>
+              <NotificationsBell />
+              <form action="/auth/signout" method="post" className="contents">
+                <span className="text-[12px] text-ink-3">{user.user.email}</span>
+                <button type="submit" className="btn-ghost">Sign out</button>
+              </form>
+            </>
           ) : (
             <>
               <Link href="/login" className="text-sm text-ink-2 hover:text-ink">Sign in</Link>
