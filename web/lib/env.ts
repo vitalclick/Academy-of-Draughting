@@ -35,6 +35,13 @@ const schema = z.object({
   RESEND_FROM_EMAIL: optEmail.transform((v) => v ?? "admissions@aod.local"),
   ADMISSIONS_NOTIFY_EMAIL: optEmail,
   MINDEE_API_KEY: optStr,
+
+  // Pass I — error reporting, anti-bot, webhook verification (all optional)
+  SENTRY_DSN: optStr,
+  NEXT_PUBLIC_SENTRY_DSN: optStr,
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: optStr,
+  TURNSTILE_SECRET_KEY: optStr,
+  RESEND_WEBHOOK_SECRET: optStr,
 });
 
 export type Env = z.infer<typeof schema>;

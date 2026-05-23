@@ -25,6 +25,16 @@ export type SubmissionStatus = "draft" | "submitted" | "graded" | "returned";
 
 export type DeletionRequestStatus = "pending" | "processing" | "completed" | "rejected";
 
+export type EmailEvent =
+  | "email.sent"
+  | "email.delivered"
+  | "email.delivery_delayed"
+  | "email.bounced"
+  | "email.complained"
+  | "email.opened"
+  | "email.clicked"
+  | (string & {});
+
 export interface Database {
   public: {
     Tables: {
@@ -204,6 +214,7 @@ export interface Database {
           cohort_label: string | null;
           status: EnrollmentStatus;
           enrolled_at: string;
+          starts_on: string | null;
         };
         Insert: {
           id?: string;
@@ -212,6 +223,7 @@ export interface Database {
           cohort_label?: string | null;
           status?: EnrollmentStatus;
           enrolled_at?: string;
+          starts_on?: string | null;
         };
         Update: {
           id?: string;
@@ -220,6 +232,7 @@ export interface Database {
           cohort_label?: string | null;
           status?: EnrollmentStatus;
           enrolled_at?: string;
+          starts_on?: string | null;
         };
         Relationships: [
           {
@@ -240,6 +253,8 @@ export interface Database {
           max_score: number;
           order_index: number;
           created_at: string;
+          release_offset_days: number | null;
+          due_offset_days: number | null;
         };
         Insert: {
           id?: string;
@@ -250,6 +265,8 @@ export interface Database {
           max_score?: number;
           order_index?: number;
           created_at?: string;
+          release_offset_days?: number | null;
+          due_offset_days?: number | null;
         };
         Update: {
           id?: string;
@@ -260,6 +277,8 @@ export interface Database {
           max_score?: number;
           order_index?: number;
           created_at?: string;
+          release_offset_days?: number | null;
+          due_offset_days?: number | null;
         };
         Relationships: [
           {
@@ -370,6 +389,75 @@ export interface Database {
             referencedColumns: ["id"];
           }
         ];
+      };
+      audit_log: {
+        Row: {
+          id: string;
+          created_at: string;
+          actor_id: string | null;
+          actor_email: string | null;
+          actor_role: string | null;
+          action: string;
+          entity_type: string | null;
+          entity_id: string | null;
+          details: Json | null;
+          ip: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          actor_id?: string | null;
+          actor_email?: string | null;
+          actor_role?: string | null;
+          action: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          details?: Json | null;
+          ip?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          actor_id?: string | null;
+          actor_email?: string | null;
+          actor_role?: string | null;
+          action?: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          details?: Json | null;
+          ip?: string | null;
+        };
+        Relationships: [];
+      };
+      email_deliveries: {
+        Row: {
+          id: string;
+          resend_id: string | null;
+          recipient: string | null;
+          subject: string | null;
+          event: string;
+          payload: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          resend_id?: string | null;
+          recipient?: string | null;
+          subject?: string | null;
+          event: string;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          resend_id?: string | null;
+          recipient?: string | null;
+          subject?: string | null;
+          event?: string;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: { [_ in never]: never };

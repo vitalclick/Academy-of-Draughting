@@ -36,6 +36,20 @@ function dueLabel(due: string | null): { text: string; tone: "ok" | "soon" | "la
   return { text: `Due ${new Date(due).toLocaleDateString()}`, tone: "ok" };
 }
 
+// Effective due-date for a student: offset from cohort start if both are set,
+// else fall back to the assignment's absolute due_at.
+function effectiveDueAt(
+  assignment: { due_at: string | null; due_offset_days: number | null },
+  enrollment: { starts_on: string | null }
+): string | null {
+  if (assignment.due_offset_days != null && enrollment.starts_on) {
+    const d = new Date(enrollment.starts_on);
+    d.setUTCDate(d.getUTCDate() + assignment.due_offset_days);
+    return d.toISOString();
+  }
+  return assignment.due_at;
+}
+
 export default async function PortalPage() {
   const session = await getUserWithRole();
   if (!session) redirect("/login?next=/portal");
@@ -46,7 +60,7 @@ export default async function PortalPage() {
     await Promise.all([
       supabase
         .from("enrollments")
-        .select("id, user_id, course_slug, cohort_label, status, enrolled_at")
+        .select("id, user_id, course_slug, cohort_label, status, enrolled_at, starts_on")
         .eq("user_id", session.user.id)
         .order("enrolled_at", { ascending: false })
         .returns<Enrollment[]>(),
@@ -82,7 +96,7 @@ export default async function PortalPage() {
   const { data: assignmentsData } = moduleIds.length
     ? await supabase
         .from("assignments")
-        .select("id, module_id, title, description, due_at, max_score, order_index, created_at")
+        .select("id, module_id, title, description, due_at, max_score, order_index, created_at, release_offset_days, due_offset_days")
         .in("module_id", moduleIds)
         .order("order_index", { ascending: true })
         .returns<Assignment[]>()
@@ -190,7 +204,7 @@ export default async function PortalPage() {
                               <ul className="mt-4 grid gap-2">
                                 {list.map((a) => {
                                   const sub = submissionByAssignment.get(a.id);
-                                  const due = dueLabel(a.due_at);
+                                  const due = dueLabel(effectiveDueAt(a, enrollment));
                                   const dueTone =
                                     due.tone === "late"
                                       ? "text-red-300"

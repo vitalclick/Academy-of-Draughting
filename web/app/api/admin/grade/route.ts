@@ -7,6 +7,7 @@ import { gradeLimiter, ipFromRequest } from "@/lib/ratelimit";
 import { sendEmail, gradeFeedbackEmail } from "@/lib/email";
 import { env } from "@/lib/env";
 import { courses } from "@/data/courses";
+import { logAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
@@ -89,6 +90,18 @@ export async function POST(req: Request) {
       }),
     });
   }
+
+  await logAudit({
+    action: "submission.graded",
+    entityType: "submission",
+    entityId: data.id,
+    details: {
+      assignment_id: data.assignment_id,
+      student_id: data.user_id,
+      score: data.score,
+      status: data.status,
+    },
+  });
 
   return NextResponse.json({
     id: data.id,

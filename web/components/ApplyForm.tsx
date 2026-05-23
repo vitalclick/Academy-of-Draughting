@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { courses } from "@/data/courses";
 import { ApplyDocumentSlot } from "@/components/ApplyDocumentUpload";
+import { Turnstile } from "@/components/Turnstile";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type FormValues = {
   fullName: string;
@@ -20,6 +23,7 @@ export function ApplyForm({ defaultCourse }: { defaultCourse?: string }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [uploadToken, setUploadToken] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const {
     register,
@@ -39,7 +43,7 @@ export function ApplyForm({ defaultCourse }: { defaultCourse?: string }) {
       const res = await fetch("/api/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Submission failed");
@@ -153,9 +157,22 @@ export function ApplyForm({ defaultCourse }: { defaultCourse?: string }) {
         </div>
       )}
 
+      {TURNSTILE_SITE_KEY && (
+        <div className="mt-6">
+          <Turnstile siteKey={TURNSTILE_SITE_KEY} onToken={setTurnstileToken} />
+        </div>
+      )}
+
       <div className="mt-6 flex items-center justify-between">
-        <p className="text-[12px] text-ink-4">By submitting, you agree to be contacted by admissions. POPIA-compliant.</p>
-        <button type="submit" disabled={status === "submitting"} className="btn-primary disabled:opacity-50">
+        <p className="text-[12px] text-ink-4">
+          By submitting, you agree to be contacted by admissions and to our{" "}
+          <a href="/privacy" className="text-electric-700 underline">Privacy Policy</a>.
+        </p>
+        <button
+          type="submit"
+          disabled={status === "submitting" || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
+          className="btn-primary disabled:opacity-50"
+        >
           {status === "submitting" ? "Submitting…" : "Submit application →"}
         </button>
       </div>

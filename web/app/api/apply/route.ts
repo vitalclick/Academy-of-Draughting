@@ -6,6 +6,7 @@ import { env } from "@/lib/env";
 import { isAllowedOrigin } from "@/lib/origin";
 import { applyLimiter, ipFromRequest } from "@/lib/ratelimit";
 import { applicationReceivedEmail, sendEmail } from "@/lib/email";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,7 @@ const ApplicationSchema = z.object({
   studyMode: z.enum(["full-time", "evening", "online"]),
   prevQualification: z.string().max(200).optional(),
   notes: z.string().max(2000).optional(),
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 export type ApplicationInput = z.infer<typeof ApplicationSchema>;
@@ -41,6 +43,14 @@ export async function POST(req: Request) {
   } catch (err) {
     const issues = err instanceof z.ZodError ? err.flatten() : null;
     return NextResponse.json({ error: "Validation failed.", issues }, { status: 400 });
+  }
+
+  const captcha = await verifyTurnstile(input.turnstileToken, ip);
+  if (!captcha.ok) {
+    return NextResponse.json(
+      { error: "Anti-bot check failed. Please retry." },
+      { status: 400 }
+    );
   }
 
   // Optional: associate the submission with the signed-in user.

@@ -116,10 +116,20 @@ export default async function GradingQueuePage({
                       <p className="mt-1 whitespace-pre-line">{sub.notes}</p>
                     </div>
                   )}
-                  <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px]">
+                    {sub.storage_path && (
+                      <a
+                        href={`/api/admin/file?bucket=submissions&path=${encodeURIComponent(sub.storage_path)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mono rounded border border-paper-3 px-2 py-1 text-electric-700 hover:border-electric-300"
+                      >
+                        Download file ↗
+                      </a>
+                    )}
                     <Link
                       href={`/admin/cohorts/${sub.assignments.modules.course_slug}`}
-                      className="mono text-[11px] text-electric-600 hover:underline"
+                      className="mono text-electric-600 hover:underline"
                     >
                       Open full cohort view →
                     </Link>

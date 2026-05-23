@@ -231,6 +231,8 @@ export function AssignmentAdder({
   const [dueAt, setDueAt] = useState("");
   const [maxScore, setMaxScore] = useState("100");
   const [order, setOrder] = useState(String(nextOrder));
+  const [releaseOffset, setReleaseOffset] = useState("");
+  const [dueOffset, setDueOffset] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -245,12 +247,16 @@ export function AssignmentAdder({
           dueAt: fromLocal(dueAt) || undefined,
           maxScore: Number(maxScore),
           orderIndex: Number(order),
+          releaseOffsetDays: releaseOffset === "" ? null : Number(releaseOffset),
+          dueOffsetDays: dueOffset === "" ? null : Number(dueOffset),
         });
         setTitle("");
         setDescription("");
         setDueAt("");
         setMaxScore("100");
         setOrder(String(Number(order) + 1));
+        setReleaseOffset("");
+        setDueOffset("");
         setOpen(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed");
@@ -298,8 +304,31 @@ export function AssignmentAdder({
         type="datetime-local"
         value={dueAt}
         onChange={(e) => setDueAt(e.target.value)}
+        placeholder="Absolute due date (optional, overrides per-cohort offset)"
         className="mt-2 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
       />
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <label className="text-[11px] text-ink-3">
+          Release offset (days after cohort start)
+          <input
+            type="number"
+            value={releaseOffset}
+            onChange={(e) => setReleaseOffset(e.target.value)}
+            placeholder="leave blank for day 0"
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+        <label className="text-[11px] text-ink-3">
+          Due offset (days after cohort start)
+          <input
+            type="number"
+            value={dueOffset}
+            onChange={(e) => setDueOffset(e.target.value)}
+            placeholder="leave blank for none"
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+      </div>
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
@@ -331,6 +360,12 @@ export function AssignmentRow({ assignment }: { assignment: Assignment }) {
   const [dueAt, setDueAt] = useState(isoLocal(assignment.due_at));
   const [maxScore, setMaxScore] = useState(String(assignment.max_score));
   const [order, setOrder] = useState(String(assignment.order_index));
+  const [releaseOffset, setReleaseOffset] = useState(
+    assignment.release_offset_days == null ? "" : String(assignment.release_offset_days)
+  );
+  const [dueOffset, setDueOffset] = useState(
+    assignment.due_offset_days == null ? "" : String(assignment.due_offset_days)
+  );
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -344,6 +379,8 @@ export function AssignmentRow({ assignment }: { assignment: Assignment }) {
           dueAt: fromLocal(dueAt),
           maxScore: Number(maxScore),
           orderIndex: Number(order),
+          releaseOffsetDays: releaseOffset === "" ? null : Number(releaseOffset),
+          dueOffsetDays: dueOffset === "" ? null : Number(dueOffset),
         });
         setEditing(false);
       } catch (err) {
@@ -418,6 +455,26 @@ export function AssignmentRow({ assignment }: { assignment: Assignment }) {
         onChange={(e) => setDueAt(e.target.value)}
         className="mt-2 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
       />
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <label className="text-[11px] text-ink-3">
+          Release offset (days)
+          <input
+            type="number"
+            value={releaseOffset}
+            onChange={(e) => setReleaseOffset(e.target.value)}
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+        <label className="text-[11px] text-ink-3">
+          Due offset (days)
+          <input
+            type="number"
+            value={dueOffset}
+            onChange={(e) => setDueOffset(e.target.value)}
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+      </div>
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}

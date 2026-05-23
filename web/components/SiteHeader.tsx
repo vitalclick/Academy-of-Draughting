@@ -13,6 +13,7 @@ const NAV = [
 export async function SiteHeader() {
   const user = hasSupabasePublic(env()) ? await safeGetUser() : null;
   const isAdmin = user?.role === "admin";
+  const isFaculty = user?.role === "faculty";
 
   return (
     <header className="sticky top-0 z-40 border-b border-paper-3 bg-white/85 backdrop-blur">
@@ -42,6 +43,11 @@ export async function SiteHeader() {
               Admin
             </Link>
           )}
+          {isFaculty && (
+            <Link href="/admin/curriculum" className="text-sm font-medium text-electric-700 hover:text-electric-600">
+              Curriculum
+            </Link>
+          )}
           {user ? (
             <form action="/auth/signout" method="post" className="contents">
               <span className="text-[12px] text-ink-3">{user.user.email}</span>
@@ -58,6 +64,7 @@ export async function SiteHeader() {
         <HeaderMobile
           nav={NAV}
           isAdmin={isAdmin}
+          isFaculty={isFaculty}
           signedIn={Boolean(user)}
           email={user?.user.email ?? null}
         />

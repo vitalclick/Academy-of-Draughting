@@ -25,7 +25,7 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
 
   const { data: docs } = await supabase
     .from("application_documents")
-    .select("id, filename, mime_type, size_bytes, ocr_status, created_at")
+    .select("id, filename, mime_type, size_bytes, ocr_status, created_at, storage_path")
     .eq("application_id", params.id)
     .order("created_at", { ascending: false });
 
@@ -59,12 +59,28 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
                   <p className="px-4 py-6 text-center text-sm text-ink-3">No documents uploaded yet.</p>
                 ) : (
                   <ul className="divide-y divide-paper-2 text-sm">
-                    {docs!.map((d) => (
-                      <li key={d.id} className="flex items-center justify-between px-4 py-2">
-                        <span>{d.filename}</span>
-                        <span className="mono text-ink-4">{d.ocr_status}</span>
-                      </li>
-                    ))}
+                    {docs!.map((d: { id: string; filename: string; ocr_status: string; storage_path?: string }) => {
+                      const href = d.storage_path
+                        ? `/api/admin/file?bucket=application-documents&path=${encodeURIComponent(d.storage_path)}`
+                        : null;
+                      return (
+                        <li key={d.id} className="flex items-center justify-between px-4 py-2">
+                          {href ? (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-electric-700 hover:underline"
+                            >
+                              {d.filename}
+                            </a>
+                          ) : (
+                            <span>{d.filename}</span>
+                          )}
+                          <span className="mono text-ink-4">{d.ocr_status}</span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

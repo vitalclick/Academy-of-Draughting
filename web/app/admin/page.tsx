@@ -79,6 +79,12 @@ export default async function AdminApplicationsPage({
           />
         </div>
 
+        <div className="mt-4 flex flex-wrap gap-2 text-[12px]">
+          <Link href="/admin/audit" className="rounded-md border border-paper-3 bg-white px-3 py-1.5 text-ink-2 hover:border-electric-300">
+            Audit log →
+          </Link>
+        </div>
+
         <div className="mt-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="eyebrow">ADMIN · APPLICATIONS</span>

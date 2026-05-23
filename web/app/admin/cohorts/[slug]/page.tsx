@@ -207,6 +207,18 @@ export default async function CohortDetailPage({ params }: Params) {
                                     <p className="mt-1 whitespace-pre-line">{sub.notes}</p>
                                   </div>
                                 )}
+                                {sub?.storage_path && (
+                                  <div className="mt-2">
+                                    <a
+                                      href={`/api/admin/file?bucket=submissions&path=${encodeURIComponent(sub.storage_path)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="mono text-[11px] text-electric-700 hover:underline"
+                                    >
+                                      Download submitted file ↗
+                                    </a>
+                                  </div>
+                                )}
                                 {sub ? (
                                   <GradeForm
                                     submissionId={sub.id}

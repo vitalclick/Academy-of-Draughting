@@ -7,6 +7,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { sendEmail, enrollmentWelcomeEmail } from "@/lib/email";
 import { courses } from "@/data/courses";
+import { logAudit } from "@/lib/audit";
 import type { Database } from "@/lib/database.types";
 
 type ModuleUpdate = Database["public"]["Tables"]["modules"]["Update"];
@@ -85,6 +86,13 @@ export async function setApplicationStatus(id: string, status: string) {
     });
   }
 
+  await logAudit({
+    action: "application.status_changed",
+    entityType: "application",
+    entityId: id,
+    details: { from: existing.status, to: parsed.data, applicant_email: existing.email },
+  });
+
   revalidatePath(`/admin/applications/${id}`);
   revalidatePath("/admin");
   revalidatePath("/admin/cohorts");
@@ -113,6 +121,13 @@ export async function linkApplicationToUser(id: string, email: string) {
     .update({ user_id: profile.id })
     .eq("id", id);
   if (updErr) throw new Error(updErr.message);
+
+  await logAudit({
+    action: "application.linked_to_user",
+    entityType: "application",
+    entityId: id,
+    details: { linked_user_id: profile.id, email: parsedEmail.data },
+  });
 
   revalidatePath(`/admin/applications/${id}`);
   revalidatePath("/admin");
@@ -159,6 +174,13 @@ export async function manualEnroll(args: {
     }),
   });
 
+  await logAudit({
+    action: "enrollment.created",
+    entityType: "enrollment",
+    entityId: inserted.id,
+    details: { user_id: profile.id, course_slug: courseSlug, cohort_label: cohortLabel },
+  });
+
   revalidatePath(`/admin/cohorts/${courseSlug}`);
   revalidatePath("/admin/cohorts");
   return { enrollmentId: inserted.id };
@@ -186,6 +208,8 @@ const AssignmentInputSchema = z.object({
     .optional(),
   maxScore: z.number().int().min(1).max(1000),
   orderIndex: z.number().int().min(0).max(10000),
+  releaseOffsetDays: z.number().int().min(0).max(3650).nullable().optional(),
+  dueOffsetDays: z.number().int().min(0).max(3650).nullable().optional(),
 });
 
 export async function createModule(input: z.infer<typeof ModuleInputSchema>) {
@@ -265,6 +289,8 @@ export async function createAssignment(input: z.infer<typeof AssignmentInputSche
       due_at: v.dueAt && v.dueAt !== "" ? v.dueAt : null,
       max_score: v.maxScore,
       order_index: v.orderIndex,
+      release_offset_days: v.releaseOffsetDays ?? null,
+      due_offset_days: v.dueOffsetDays ?? null,
     })
     .select("id")
     .single();
@@ -288,6 +314,9 @@ export async function updateAssignment(
     patch.max_score = z.number().int().min(1).max(1000).parse(input.maxScore);
   if (input.orderIndex != null)
     patch.order_index = z.number().int().min(0).max(10000).parse(input.orderIndex);
+  if (input.releaseOffsetDays !== undefined)
+    patch.release_offset_days = input.releaseOffsetDays;
+  if (input.dueOffsetDays !== undefined) patch.due_offset_days = input.dueOffsetDays;
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -326,6 +355,13 @@ export async function updateEnrollmentStatus(enrollmentId: string, status: strin
     .select("course_slug")
     .single();
   if (error) throw new Error(error.message);
+
+  await logAudit({
+    action: "enrollment.status_changed",
+    entityType: "enrollment",
+    entityId: enrollmentId,
+    details: { course_slug: data.course_slug, to: parsed.data },
+  });
 
   revalidatePath(`/admin/cohorts/${data.course_slug}`);
   revalidatePath("/admin/cohorts");
