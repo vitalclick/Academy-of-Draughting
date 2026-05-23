@@ -4,6 +4,7 @@ import { getSupabaseServer, getUserWithRole } from "@/lib/supabase/server";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { SubmitWork } from "@/components/SubmitWork";
 import { AssignmentTutor } from "@/components/AssignmentTutor";
+import { CourseProgress } from "@/components/CourseProgress";
 import { courses } from "@/data/courses";
 import type {
   Application,
@@ -150,6 +151,17 @@ export default async function PortalPage() {
                       </div>
                     </div>
                   </header>
+
+                  {courseModules.length > 0 && courseAssignments.length > 0 && (
+                    <div className="mt-6">
+                      <CourseProgress
+                        courseSlug={enrollment.course_slug}
+                        modules={courseModules}
+                        assignments={courseAssignments}
+                        submissions={submissions}
+                      />
+                    </div>
+                  )}
 
                   <div className="mt-6 space-y-5">
                     {courseModules.length === 0 ? (

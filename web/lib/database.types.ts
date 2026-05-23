@@ -331,6 +331,14 @@ export interface Database {
         Args: { course: string };
         Returns: boolean;
       };
+      is_admin_or_faculty: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      cohort_progress: {
+        Args: { course: string };
+        Returns: Json;
+      };
       handle_new_user: {
         Args: Record<string, never>;
         Returns: unknown;
@@ -353,3 +361,14 @@ export type Module = Database["public"]["Tables"]["modules"]["Row"];
 export type Enrollment = Database["public"]["Tables"]["enrollments"]["Row"];
 export type Assignment = Database["public"]["Tables"]["assignments"]["Row"];
 export type Submission = Database["public"]["Tables"]["submissions"]["Row"];
+
+export type CohortProgress = {
+  cohort_size: number;
+  my_score_total: number;
+  my_graded_count: number;
+  my_rank: number | null;
+  cohort_avg_score: number;
+  cohort_top_score: number;
+  max_possible: number;
+  assignment_count: number;
+};

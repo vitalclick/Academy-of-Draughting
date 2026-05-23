@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getUserWithRole } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { GradeForm } from "@/components/GradeForm";
+import { GradingFeedListener } from "@/components/GradingFeedListener";
 import { courses } from "@/data/courses";
 import type { Submission } from "@/lib/database.types";
 
@@ -58,9 +59,12 @@ export default async function GradingQueuePage({
               {rows.length} {rows.length === 1 ? "submission" : "submissions"} awaiting review · oldest first
             </p>
           </div>
-          <Link href="/admin" className="mono text-[12px] text-ink-3 hover:text-ink-1">
-            ← Admin home
-          </Link>
+          <div className="flex flex-col items-end gap-2">
+            <GradingFeedListener courseFilter={searchParams.course} />
+            <Link href="/admin" className="mono text-[12px] text-ink-3 hover:text-ink-1">
+              ← Admin home
+            </Link>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-1 rounded-md border border-paper-3 bg-white p-1 text-[12px]">
