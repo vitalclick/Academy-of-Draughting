@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+.next
+out
+.vercel
+.local-store
+*.log
+.DS_Store
+.env
+.env*.local
+UI_Design
+web
