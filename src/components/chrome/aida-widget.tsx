@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAida } from './aida-context';
 import { track } from '@/lib/analytics/events';
 
-const HIDDEN_ROUTES = ['/admin', '/data-rights/confirm'];
+const HIDDEN_ROUTES = ['/admin', '/portal', '/data-rights/confirm'];
 
 type ToolEffect =
   | { kind: 'cta-apply'; courseId: string; mode?: string }

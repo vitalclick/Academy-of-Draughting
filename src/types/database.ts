@@ -54,6 +54,58 @@ export type DocumentRow = {
   uploaded_at: string;
 };
 
+export type EnrollmentState = 'pending' | 'active' | 'completed' | 'withdrawn';
+export type AssignmentKind = 'drawing' | 'theory' | 'project' | 'exam';
+export type SubmissionState = 'draft' | 'submitted' | 'graded' | 'returned';
+
+export type EnrollmentRow = {
+  id: string;
+  user_id: string;
+  applicant_id: string;
+  application_id: string | null;
+  programme: string;
+  cohort: string;
+  state: EnrollmentState;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssignmentRow = {
+  id: string;
+  programme: string;
+  cohort: string | null;
+  kind: AssignmentKind;
+  module: string;
+  title: string;
+  brief: string | null;
+  due_at: string | null;
+  weight: number;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SubmissionRow = {
+  id: string;
+  enrollment_id: string;
+  assignment_id: string;
+  state: SubmissionState;
+  storage_path: string | null;
+  filename: string | null;
+  bytes: number | null;
+  mime_type: string | null;
+  comment: string | null;
+  grade: number | null;
+  grader_id: string | null;
+  feedback: string | null;
+  submitted_at: string | null;
+  graded_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ContentKind = 'blog_post' | 'faq' | 'testimonial' | 'page_section';
 export type ContentState = 'draft' | 'review' | 'published' | 'archived';
 
@@ -141,6 +193,36 @@ export type Database = {
         Row: AdminRow;
         Insert: Omit<AdminRow, 'created_at'> & { created_at?: string };
         Update: Partial<Omit<AdminRow, 'user_id'>>;
+        Relationships: [];
+      };
+      enrollments: {
+        Row: EnrollmentRow;
+        Insert: Omit<EnrollmentRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<EnrollmentRow, 'id'>>;
+        Relationships: [];
+      };
+      assignments: {
+        Row: AssignmentRow;
+        Insert: Omit<AssignmentRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<AssignmentRow, 'id'>>;
+        Relationships: [];
+      };
+      submissions: {
+        Row: SubmissionRow;
+        Insert: Omit<SubmissionRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<SubmissionRow, 'id'>>;
         Relationships: [];
       };
     };

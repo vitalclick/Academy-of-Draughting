@@ -9,7 +9,8 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl.pathname;
   const isAdminArea = url.startsWith('/admin') || url.startsWith('/api/admin');
-  if (!isAdminArea) return NextResponse.next();
+  const isPortalArea = url.startsWith('/portal') && !url.startsWith('/portal/login');
+  if (!isAdminArea && !isPortalArea) return NextResponse.next();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -34,5 +35,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*', '/portal/:path*'],
 };
