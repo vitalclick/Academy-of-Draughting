@@ -7,6 +7,10 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 import { sendEmail, enrollmentWelcomeEmail } from "@/lib/email";
 import { courses } from "@/data/courses";
+import type { Database } from "@/lib/database.types";
+
+type ModuleUpdate = Database["public"]["Tables"]["modules"]["Update"];
+type AssignmentUpdate = Database["public"]["Tables"]["assignments"]["Update"];
 
 const StatusSchema = z.enum(["received", "reviewing", "accepted", "rejected", "withdrawn"]);
 const EnrollmentStatusSchema = z.enum(["active", "completed", "withdrawn"]);
@@ -28,6 +32,14 @@ function courseTitle(slug: string): string {
 async function requireAdmin() {
   const session = await getUserWithRole();
   if (!session || session.role !== "admin") throw new Error("Not authorized");
+  return session;
+}
+
+async function requireAdminOrFaculty() {
+  const session = await getUserWithRole();
+  if (!session || (session.role !== "admin" && session.role !== "faculty")) {
+    throw new Error("Not authorized");
+  }
   return session;
 }
 
@@ -150,6 +162,155 @@ export async function manualEnroll(args: {
   revalidatePath(`/admin/cohorts/${courseSlug}`);
   revalidatePath("/admin/cohorts");
   return { enrollmentId: inserted.id };
+}
+
+// ---------------------------------------------------------------------------
+// Curriculum CRUD — admin or faculty.
+// ---------------------------------------------------------------------------
+
+const ModuleInputSchema = z.object({
+  courseSlug: SlugSchema,
+  title: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  orderIndex: z.number().int().min(0).max(10000),
+});
+
+const AssignmentInputSchema = z.object({
+  moduleId: z.string().uuid(),
+  title: z.string().min(1).max(200),
+  description: z.string().max(4000).optional(),
+  dueAt: z
+    .string()
+    .datetime({ offset: true })
+    .or(z.literal(""))
+    .optional(),
+  maxScore: z.number().int().min(1).max(1000),
+  orderIndex: z.number().int().min(0).max(10000),
+});
+
+export async function createModule(input: z.infer<typeof ModuleInputSchema>) {
+  await requireAdminOrFaculty();
+  const v = ModuleInputSchema.parse(input);
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("modules")
+    .insert({
+      course_slug: v.courseSlug,
+      title: v.title,
+      description: v.description?.trim() || null,
+      order_index: v.orderIndex,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${v.courseSlug}`);
+  revalidatePath("/admin/curriculum");
+  return { id: data.id };
+}
+
+export async function updateModule(
+  id: string,
+  input: Partial<z.infer<typeof ModuleInputSchema>>
+) {
+  await requireAdminOrFaculty();
+  const patch: ModuleUpdate = {};
+  if (input.title != null) patch.title = z.string().min(1).max(200).parse(input.title);
+  if (input.description !== undefined)
+    patch.description = input.description?.trim() || null;
+  if (input.orderIndex != null)
+    patch.order_index = z.number().int().min(0).max(10000).parse(input.orderIndex);
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("modules")
+    .update(patch)
+    .eq("id", id)
+    .select("course_slug")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${data.course_slug}`);
+}
+
+export async function deleteModule(id: string) {
+  await requireAdminOrFaculty();
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("modules")
+    .delete()
+    .eq("id", id)
+    .select("course_slug")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${data.course_slug}`);
+  revalidatePath("/admin/curriculum");
+}
+
+export async function createAssignment(input: z.infer<typeof AssignmentInputSchema>) {
+  await requireAdminOrFaculty();
+  const v = AssignmentInputSchema.parse(input);
+  const supabase = getSupabaseAdmin();
+  // Resolve courseSlug via module → for revalidation.
+  const { data: m, error: mErr } = await supabase
+    .from("modules")
+    .select("course_slug")
+    .eq("id", v.moduleId)
+    .single();
+  if (mErr) throw new Error(mErr.message);
+  const { data, error } = await supabase
+    .from("assignments")
+    .insert({
+      module_id: v.moduleId,
+      title: v.title,
+      description: v.description?.trim() || null,
+      due_at: v.dueAt && v.dueAt !== "" ? v.dueAt : null,
+      max_score: v.maxScore,
+      order_index: v.orderIndex,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${m.course_slug}`);
+  return { id: data.id };
+}
+
+export async function updateAssignment(
+  id: string,
+  input: Partial<z.infer<typeof AssignmentInputSchema>>
+) {
+  await requireAdminOrFaculty();
+  const patch: AssignmentUpdate = {};
+  if (input.title != null) patch.title = z.string().min(1).max(200).parse(input.title);
+  if (input.description !== undefined)
+    patch.description = input.description?.trim() || null;
+  if (input.dueAt !== undefined)
+    patch.due_at = input.dueAt && input.dueAt !== "" ? input.dueAt : null;
+  if (input.maxScore != null)
+    patch.max_score = z.number().int().min(1).max(1000).parse(input.maxScore);
+  if (input.orderIndex != null)
+    patch.order_index = z.number().int().min(0).max(10000).parse(input.orderIndex);
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("assignments")
+    .update(patch)
+    .eq("id", id)
+    .select("modules!inner(course_slug)")
+    .single<{ modules: { course_slug: string } }>();
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${data.modules.course_slug}`);
+}
+
+export async function deleteAssignment(id: string) {
+  await requireAdminOrFaculty();
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("assignments")
+    .delete()
+    .eq("id", id)
+    .select("modules!inner(course_slug)")
+    .single<{ modules: { course_slug: string } }>();
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${data.modules.course_slug}`);
 }
 
 export async function updateEnrollmentStatus(enrollmentId: string, status: string) {

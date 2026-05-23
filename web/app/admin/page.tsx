@@ -44,19 +44,47 @@ export default async function AdminApplicationsPage({
   const rows = data ?? [];
 
   const counts = await statusCounts();
+  const summary = await dashboardSummary();
 
   return (
     <section className="bg-paper">
       <div className="container-page py-12">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <SummaryCard
+            label="Applications · pending review"
+            value={summary.pendingApplications}
+            sub={`${summary.totalApplications} total`}
+            href="/admin?status=received"
+          />
+          <SummaryCard
+            label="Submissions · awaiting grading"
+            value={summary.ungradedSubmissions}
+            sub={summary.oldestUngradedDays != null
+              ? `oldest ${summary.oldestUngradedDays}d ago`
+              : "all clear"}
+            href="/admin/grading"
+            tone={summary.ungradedSubmissions > 0 ? "warning" : "ok"}
+          />
+          <SummaryCard
+            label="Active enrollments"
+            value={summary.activeEnrollments}
+            sub={`${summary.cohortCount} ${summary.cohortCount === 1 ? "cohort" : "cohorts"}`}
+            href="/admin/cohorts"
+          />
+          <SummaryCard
+            label="Curriculum"
+            value={summary.assignmentCount}
+            sub={`${summary.moduleCount} ${summary.moduleCount === 1 ? "module" : "modules"} · assignments`}
+            href="/admin/curriculum"
+          />
+        </div>
+
+        <div className="mt-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="eyebrow">ADMIN · APPLICATIONS</span>
             <h1 className="mt-2 text-3xl font-medium">Applications</h1>
             <p className="text-sm text-ink-3">
-              {rows.length} shown · most recent first ·{" "}
-              <Link href="/admin/cohorts" className="text-electric-600 hover:underline">
-                cohorts →
-              </Link>
+              {rows.length} shown · most recent first
             </p>
           </div>
           <div className="flex flex-wrap gap-1 rounded-md border border-paper-3 bg-white p-1 text-[12px]">
@@ -131,6 +159,78 @@ async function statusCounts() {
     acc.total += 1;
   }
   return acc as Record<string, number> & { total: number };
+}
+
+async function dashboardSummary() {
+  const supabase = getSupabaseAdmin();
+  const [appsRes, subsRes, enrollRes, modRes, asgRes] = await Promise.all([
+    supabase.from("applications").select("status"),
+    supabase
+      .from("submissions")
+      .select("status, submitted_at")
+      .eq("status", "submitted"),
+    supabase.from("enrollments").select("status, course_slug"),
+    supabase.from("modules").select("id"),
+    supabase.from("assignments").select("id"),
+  ]);
+  const apps = (appsRes.data ?? []) as { status: string }[];
+  const subs = (subsRes.data ?? []) as { status: string; submitted_at: string | null }[];
+  const enrolls = (enrollRes.data ?? []) as { status: string; course_slug: string }[];
+
+  const pendingApplications = apps.filter(
+    (a) => a.status === "received" || a.status === "reviewing"
+  ).length;
+  const ungraded = subs.length;
+  const oldest = subs
+    .map((s) => (s.submitted_at ? +new Date(s.submitted_at) : null))
+    .filter((n): n is number => n != null)
+    .sort((a, b) => a - b)[0];
+  const oldestUngradedDays =
+    oldest != null ? Math.floor((Date.now() - oldest) / 86_400_000) : null;
+  const activeEnrollments = enrolls.filter((e) => e.status === "active").length;
+  const cohortCount = new Set(enrolls.map((e) => e.course_slug)).size;
+
+  return {
+    totalApplications: apps.length,
+    pendingApplications,
+    ungradedSubmissions: ungraded,
+    oldestUngradedDays,
+    activeEnrollments,
+    cohortCount,
+    moduleCount: (modRes.data ?? []).length,
+    assignmentCount: (asgRes.data ?? []).length,
+  };
+}
+
+function SummaryCard({
+  label,
+  value,
+  sub,
+  href,
+  tone,
+}: {
+  label: string;
+  value: number;
+  sub: string;
+  href: string;
+  tone?: "ok" | "warning";
+}) {
+  const valueClass =
+    tone === "warning" && value > 0
+      ? "text-amber-700"
+      : tone === "ok"
+        ? "text-electric-600"
+        : "text-ink-1";
+  return (
+    <Link
+      href={href}
+      className="block rounded-lg border border-paper-3 bg-white p-4 transition hover:border-electric-300 hover:shadow-sm"
+    >
+      <div className="mono text-[10px] uppercase text-ink-4">{label}</div>
+      <div className={`mt-2 text-3xl font-medium ${valueClass}`}>{value}</div>
+      <div className="mt-1 text-[11px] text-ink-3">{sub}</div>
+    </Link>
+  );
 }
 
 function Th({ children }: { children?: React.ReactNode }) {
