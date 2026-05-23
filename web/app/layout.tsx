@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const plausibleDomain = e.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
+  const nonce = headers().get("x-nonce") ?? undefined;
   return (
     <html lang="en">
       <body>
@@ -38,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             src="https://plausible.io/js/script.js"
             data-domain={plausibleDomain}
             strategy="afterInteractive"
+            nonce={nonce}
           />
         )}
       </body>

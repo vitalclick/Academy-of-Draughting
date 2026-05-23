@@ -23,6 +23,8 @@ export type EnrollmentStatus = "active" | "completed" | "withdrawn";
 
 export type SubmissionStatus = "draft" | "submitted" | "graded" | "returned";
 
+export type ScanStatus = "pending" | "clean" | "infected" | "skipped" | "error";
+
 export type DeletionRequestStatus = "pending" | "processing" | "completed" | "rejected";
 
 export type EmailEvent =
@@ -139,6 +141,7 @@ export interface Database {
           ocr_status: OcrStatus;
           ocr_result: Json | null;
           created_at: string;
+          scan_status: ScanStatus;
         };
         Insert: {
           id?: string;
@@ -151,6 +154,7 @@ export interface Database {
           ocr_status?: OcrStatus;
           ocr_result?: Json | null;
           created_at?: string;
+          scan_status?: ScanStatus;
         };
         Update: {
           id?: string;
@@ -163,6 +167,7 @@ export interface Database {
           ocr_status?: OcrStatus;
           ocr_result?: Json | null;
           created_at?: string;
+          scan_status?: ScanStatus;
         };
         Relationships: [
           {
@@ -318,6 +323,7 @@ export interface Database {
           graded_at: string | null;
           created_at: string;
           updated_at: string;
+          scan_status: ScanStatus;
         };
         Insert: {
           id?: string;
@@ -332,6 +338,7 @@ export interface Database {
           graded_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          scan_status?: ScanStatus;
         };
         Update: {
           id?: string;
@@ -346,6 +353,7 @@ export interface Database {
           graded_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          scan_status?: ScanStatus;
         };
         Relationships: [
           {
@@ -361,6 +369,104 @@ export interface Database {
             referencedColumns: ["id"];
           }
         ];
+      };
+      rubric_criteria: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          label: string;
+          description: string | null;
+          max_points: number;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          label: string;
+          description?: string | null;
+          max_points: number;
+          order_index?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          assignment_id?: string;
+          label?: string;
+          description?: string | null;
+          max_points?: number;
+          order_index?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rubric_criteria_assignment_id_fkey";
+            columns: ["assignment_id"];
+            referencedRelation: "assignments";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      submission_criterion_scores: {
+        Row: {
+          id: string;
+          submission_id: string;
+          criterion_id: string;
+          points: number;
+          comment: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          criterion_id: string;
+          points: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          submission_id?: string;
+          criterion_id?: string;
+          points?: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "submission_criterion_scores_submission_id_fkey";
+            columns: ["submission_id"];
+            referencedRelation: "submissions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "submission_criterion_scores_criterion_id_fkey";
+            columns: ["criterion_id"];
+            referencedRelation: "rubric_criteria";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assignment_prerequisites: {
+        Row: {
+          assignment_id: string;
+          prerequisite_id: string;
+          created_at: string;
+        };
+        Insert: {
+          assignment_id: string;
+          prerequisite_id: string;
+          created_at?: string;
+        };
+        Update: {
+          assignment_id?: string;
+          prerequisite_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       data_deletion_requests: {
         Row: {
@@ -609,6 +715,9 @@ export type Module = Database["public"]["Tables"]["modules"]["Row"];
 export type Enrollment = Database["public"]["Tables"]["enrollments"]["Row"];
 export type Assignment = Database["public"]["Tables"]["assignments"]["Row"];
 export type Submission = Database["public"]["Tables"]["submissions"]["Row"];
+export type RubricCriterion = Database["public"]["Tables"]["rubric_criteria"]["Row"];
+export type SubmissionCriterionScore =
+  Database["public"]["Tables"]["submission_criterion_scores"]["Row"];
 
 export type CohortProgress = {
   cohort_size: number;

@@ -46,6 +46,10 @@ const schema = z.object({
   // Privacy-friendly analytics (cookieless). When unset, the script is not
   // injected and no requests leave the browser.
   NEXT_PUBLIC_PLAUSIBLE_DOMAIN: optStr,
+
+  // Antivirus: VirusTotal hash-lookup. When unset, uploads are marked
+  // 'skipped' rather than scanned.
+  VIRUSTOTAL_API_KEY: optStr,
 });
 
 export type Env = z.infer<typeof schema>;

@@ -51,6 +51,8 @@ export function ApplyDocumentSlot({
         body: file,
       });
       if (!put.ok) throw new Error(`Upload failed (${put.status})`);
+      // Anonymous apply uploads stay scan_status='pending'; an authenticated
+      // rescan (or background worker) processes them later.
       setFilename(file.name);
       setStatus("done");
     } catch (err) {

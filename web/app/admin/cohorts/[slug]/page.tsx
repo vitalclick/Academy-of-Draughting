@@ -81,7 +81,7 @@ export default async function CohortDetailPage({ params }: Params) {
   const { data: submissionsData } = userIds.length && assignments.length
     ? await supabase
         .from("submissions")
-        .select("id, assignment_id, user_id, status, score, feedback, submitted_at, graded_at, storage_path, notes, created_at, updated_at")
+        .select("id, assignment_id, user_id, status, score, feedback, submitted_at, graded_at, storage_path, notes, created_at, updated_at, scan_status")
         .in("assignment_id", assignments.map((a) => a.id))
         .in("user_id", userIds)
         .returns<Submission[]>()
@@ -90,6 +90,38 @@ export default async function CohortDetailPage({ params }: Params) {
 
   const submissionLookup = new Map<string, Submission>();
   for (const s of submissions) submissionLookup.set(`${s.user_id}:${s.assignment_id}`, s);
+
+  // Rubric criteria per assignment + the per-submission criterion scores.
+  const assignmentIds = assignments.map((a) => a.id);
+  const { data: criteriaData } = assignmentIds.length
+    ? await supabase
+        .from("rubric_criteria")
+        .select("id, assignment_id, label, max_points, order_index")
+        .in("assignment_id", assignmentIds)
+        .order("order_index", { ascending: true })
+        .returns<{ id: string; assignment_id: string; label: string; max_points: number; order_index: number }[]>()
+    : { data: [] as { id: string; assignment_id: string; label: string; max_points: number; order_index: number }[] };
+  const criteriaByAssignment = new Map<string, { id: string; label: string; max_points: number }[]>();
+  for (const c of criteriaData ?? []) {
+    const list = criteriaByAssignment.get(c.assignment_id) ?? [];
+    list.push({ id: c.id, label: c.label, max_points: c.max_points });
+    criteriaByAssignment.set(c.assignment_id, list);
+  }
+
+  const submissionIds = submissions.map((s) => s.id);
+  const { data: critScoreData } = submissionIds.length
+    ? await supabase
+        .from("submission_criterion_scores")
+        .select("submission_id, criterion_id, points")
+        .in("submission_id", submissionIds)
+        .returns<{ submission_id: string; criterion_id: string; points: number }[]>()
+    : { data: [] as { submission_id: string; criterion_id: string; points: number }[] };
+  const critScoresBySubmission = new Map<string, Record<string, number>>();
+  for (const cs of critScoreData ?? []) {
+    const m = critScoresBySubmission.get(cs.submission_id) ?? {};
+    m[cs.criterion_id] = cs.points;
+    critScoresBySubmission.set(cs.submission_id, m);
+  }
 
   return (
     <section className="bg-paper">
@@ -232,6 +264,8 @@ export default async function CohortDetailPage({ params }: Params) {
                                     submittedAt={sub.submitted_at}
                                     latePenaltyPctPerDay={a.late_penalty_pct_per_day}
                                     lateGraceDays={a.late_grace_days}
+                                    criteria={criteriaByAssignment.get(a.id) ?? []}
+                                    initialCriterionScores={critScoresBySubmission.get(sub.id) ?? {}}
                                   />
                                 ) : (
                                   <div className="mt-2 text-[11px] text-ink-4">

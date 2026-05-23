@@ -383,6 +383,82 @@ export async function deleteAssignment(id: string) {
   revalidatePath(`/admin/curriculum/${data.modules.course_slug}`);
 }
 
+// ---------------------------------------------------------------------------
+// Rubric criteria — admin or faculty.
+// ---------------------------------------------------------------------------
+
+async function courseSlugForAssignment(assignmentId: string): Promise<string> {
+  const { data, error } = await getSupabaseAdmin()
+    .from("assignments")
+    .select("modules!inner(course_slug)")
+    .eq("id", assignmentId)
+    .single<{ modules: { course_slug: string } }>();
+  if (error) throw new Error(error.message);
+  return data.modules.course_slug;
+}
+
+export async function createCriterion(input: {
+  assignmentId: string;
+  label: string;
+  description?: string;
+  maxPoints: number;
+  orderIndex: number;
+}) {
+  await requireAdminOrFaculty();
+  const v = z
+    .object({
+      assignmentId: z.string().uuid(),
+      label: z.string().min(1).max(200),
+      description: z.string().max(2000).optional(),
+      maxPoints: z.number().int().min(1).max(1000),
+      orderIndex: z.number().int().min(0).max(10000),
+    })
+    .parse(input);
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("rubric_criteria").insert({
+    assignment_id: v.assignmentId,
+    label: v.label,
+    description: v.description?.trim() || null,
+    max_points: v.maxPoints,
+    order_index: v.orderIndex,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${await courseSlugForAssignment(v.assignmentId)}`);
+}
+
+export async function deleteCriterion(id: string, assignmentId: string) {
+  await requireAdminOrFaculty();
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("rubric_criteria").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/curriculum/${await courseSlugForAssignment(assignmentId)}`);
+}
+
+// ---------------------------------------------------------------------------
+// Assignment prerequisites — admin or faculty.
+// ---------------------------------------------------------------------------
+
+export async function setPrerequisites(assignmentId: string, prerequisiteIds: string[]) {
+  await requireAdminOrFaculty();
+  const aId = z.string().uuid().parse(assignmentId);
+  const ids = z.array(z.string().uuid()).max(20).parse(prerequisiteIds).filter((p) => p !== aId);
+
+  const supabase = getSupabaseAdmin();
+  // Replace the full set.
+  const { error: delErr } = await supabase
+    .from("assignment_prerequisites")
+    .delete()
+    .eq("assignment_id", aId);
+  if (delErr) throw new Error(delErr.message);
+  if (ids.length) {
+    const { error: insErr } = await supabase
+      .from("assignment_prerequisites")
+      .insert(ids.map((p) => ({ assignment_id: aId, prerequisite_id: p })));
+    if (insErr) throw new Error(insErr.message);
+  }
+  revalidatePath(`/admin/curriculum/${await courseSlugForAssignment(aId)}`);
+}
+
 export async function updateEnrollmentStatus(enrollmentId: string, status: string) {
   await requireAdmin();
   const parsed = EnrollmentStatusSchema.safeParse(status);

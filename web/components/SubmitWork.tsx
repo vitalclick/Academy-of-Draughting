@@ -52,6 +52,14 @@ export function SubmitWork({ assignmentId, currentStatus }: Props) {
           body: file,
         });
         if (!put.ok) throw new Error(`Upload failed (${put.status})`);
+        // Fire-and-forget antivirus scan (no-op unless configured server-side).
+        if (data.submissionId) {
+          void fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kind: "submission", id: data.submissionId }),
+          });
+        }
       }
 
       setStatus("done");

@@ -33,7 +33,7 @@ export default async function GradingQueuePage({
   let query = supabase
     .from("submissions")
     .select(
-      "id, assignment_id, user_id, status, storage_path, notes, score, feedback, submitted_at, graded_at, created_at, updated_at, assignments!inner(title, max_score, due_at, late_penalty_pct_per_day, late_grace_days, modules!inner(title, course_slug))"
+      "id, assignment_id, user_id, status, storage_path, notes, score, feedback, submitted_at, graded_at, created_at, updated_at, scan_status, assignments!inner(title, max_score, due_at, late_penalty_pct_per_day, late_grace_days, modules!inner(title, course_slug))"
     )
     .eq("status", "submitted")
     .order("submitted_at", { ascending: true })
@@ -120,7 +120,17 @@ export default async function GradingQueuePage({
                     </div>
                   )}
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px]">
-                    {sub.storage_path && (
+                    {sub.scan_status === "infected" && (
+                      <span className="mono rounded bg-red-100 px-2 py-1 text-red-700">
+                        ⚠ MALWARE DETECTED — do not open
+                      </span>
+                    )}
+                    {sub.scan_status === "pending" && (
+                      <span className="mono rounded bg-paper-2 px-2 py-1 text-ink-4">
+                        scan pending
+                      </span>
+                    )}
+                    {sub.storage_path && sub.scan_status !== "infected" && (
                       <a
                         href={`/api/admin/file?bucket=submissions&path=${encodeURIComponent(sub.storage_path)}`}
                         target="_blank"

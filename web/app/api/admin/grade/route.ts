@@ -14,9 +14,19 @@ export const runtime = "nodejs";
 
 const BodySchema = z.object({
   submissionId: z.string().uuid(),
-  score: z.number().int().min(0).max(1000).nullable(),
+  score: z.number().int().min(0).max(100000).nullable(),
   feedback: z.string().max(8000).nullable(),
   status: z.enum(["graded", "returned"]),
+  criterionScores: z
+    .array(
+      z.object({
+        criterionId: z.string().uuid(),
+        points: z.number().int().min(0).max(1000),
+        comment: z.string().max(2000).optional(),
+      })
+    )
+    .max(50)
+    .optional(),
 });
 
 export async function POST(req: Request) {
@@ -24,8 +34,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Origin not allowed." }, { status: 403 });
   }
   const session = await getUserWithRole();
-  if (!session || session.role !== "admin") {
-    return NextResponse.json({ error: "Admin only." }, { status: 403 });
+  if (!session || (session.role !== "admin" && session.role !== "faculty")) {
+    return NextResponse.json({ error: "Admin or faculty only." }, { status: 403 });
   }
   const limited = await gradeLimiter().limit(`${session.user.id}:${ipFromRequest(req)}`);
   if (!limited.success) {
@@ -40,10 +50,28 @@ export async function POST(req: Request) {
   }
 
   const supabase = getSupabaseAdmin();
+
+  // Rubric path: when criterion scores are supplied, persist them and derive
+  // the total score from their sum (overriding any client-sent score).
+  let effectiveScore = body.score;
+  if (body.criterionScores && body.criterionScores.length) {
+    const rows = body.criterionScores.map((c) => ({
+      submission_id: body.submissionId,
+      criterion_id: c.criterionId,
+      points: c.points,
+      comment: c.comment?.trim() || null,
+    }));
+    const { error: scoreErr } = await supabase
+      .from("submission_criterion_scores")
+      .upsert(rows, { onConflict: "submission_id,criterion_id" });
+    if (scoreErr) return NextResponse.json({ error: scoreErr.message }, { status: 500 });
+    effectiveScore = body.criterionScores.reduce((sum, c) => sum + c.points, 0);
+  }
+
   const { data, error } = await supabase
     .from("submissions")
     .update({
-      score: body.score,
+      score: effectiveScore,
       feedback: body.feedback?.trim() || null,
       status: body.status,
       graded_at: new Date().toISOString(),

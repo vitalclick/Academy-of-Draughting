@@ -72,7 +72,7 @@ export default async function PortalPage() {
         .returns<PortalApplication[]>(),
       supabase
         .from("submissions")
-        .select("id, assignment_id, user_id, status, score, feedback, submitted_at, graded_at, storage_path, notes, created_at, updated_at")
+        .select("id, assignment_id, user_id, status, score, feedback, submitted_at, graded_at, storage_path, notes, created_at, updated_at, scan_status")
         .eq("user_id", session.user.id)
         .returns<Submission[]>(),
     ]);
@@ -104,6 +104,34 @@ export default async function PortalPage() {
         .returns<Assignment[]>()
     : { data: [] as Assignment[] };
   const assignments = assignmentsData ?? [];
+
+  // Prerequisites: an assignment is locked until all its prereqs have a
+  // graded submission from this student.
+  const assignmentIds = assignments.map((a) => a.id);
+  const { data: prereqRows } = assignmentIds.length
+    ? await supabase
+        .from("assignment_prerequisites")
+        .select("assignment_id, prerequisite_id")
+        .in("assignment_id", assignmentIds)
+        .returns<{ assignment_id: string; prerequisite_id: string }[]>()
+    : { data: [] as { assignment_id: string; prerequisite_id: string }[] };
+  const prereqsByAssignment = new Map<string, string[]>();
+  for (const p of prereqRows ?? []) {
+    const list = prereqsByAssignment.get(p.assignment_id) ?? [];
+    list.push(p.prerequisite_id);
+    prereqsByAssignment.set(p.assignment_id, list);
+  }
+  const gradedIds = new Set(
+    submissions.filter((s) => s.status === "graded").map((s) => s.assignment_id)
+  );
+  const assignmentTitleById = new Map(assignments.map((a) => [a.id, a.title]));
+  function lockInfo(assignmentId: string): { locked: boolean; missing: string[] } {
+    const prereqs = prereqsByAssignment.get(assignmentId) ?? [];
+    const missing = prereqs
+      .filter((id) => !gradedIds.has(id))
+      .map((id) => assignmentTitleById.get(id) ?? "another assignment");
+    return { locked: missing.length > 0, missing };
+  }
 
   const submissionByAssignment = new Map(submissions.map((s) => [s.assignment_id, s]));
   const assignmentsByModule = new Map<string, Assignment[]>();
@@ -206,6 +234,7 @@ export default async function PortalPage() {
                               <ul className="mt-4 grid gap-2">
                                 {list.map((a) => {
                                   const sub = submissionByAssignment.get(a.id);
+                                  const lock = lockInfo(a.id);
                                   const due = dueLabel(effectiveDueAt(a, enrollment));
                                   const dueTone =
                                     due.tone === "late"
@@ -272,21 +301,31 @@ export default async function PortalPage() {
                                         </div>
                                       )}
                                       <div className="mt-3 space-y-3">
-                                        <div className="flex flex-wrap items-center justify-end gap-2">
-                                          <AssignmentTutor
-                                            assignmentId={a.id}
-                                            assignmentTitle={a.title}
-                                          />
-                                          <SubmitWork
-                                            assignmentId={a.id}
-                                            currentStatus={status as
-                                              | "draft"
-                                              | "submitted"
-                                              | "graded"
-                                              | "returned"
-                                              | "not started"}
-                                          />
-                                        </div>
+                                        {lock.locked ? (
+                                          <div className="rounded border border-white/10 bg-white/[0.02] px-3 py-2 text-[12px] text-white/55">
+                                            🔒 Locked — complete{" "}
+                                            <span className="text-white/80">
+                                              {lock.missing.join(", ")}
+                                            </span>{" "}
+                                            first.
+                                          </div>
+                                        ) : (
+                                          <div className="flex flex-wrap items-center justify-end gap-2">
+                                            <AssignmentTutor
+                                              assignmentId={a.id}
+                                              assignmentTitle={a.title}
+                                            />
+                                            <SubmitWork
+                                              assignmentId={a.id}
+                                              currentStatus={status as
+                                                | "draft"
+                                                | "submitted"
+                                                | "graded"
+                                                | "returned"
+                                                | "not started"}
+                                            />
+                                          </div>
+                                        )}
                                       </div>
                                     </li>
                                   );
