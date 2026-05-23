@@ -36,6 +36,8 @@ function build(name: string, limit: number, windowSec: number): Limiter {
 export const aidaLimiter = () => build("aida", 12, 60); // 12 req / minute / ip
 export const applyLimiter = () => build("apply", 4, 600); // 4 submits / 10 min / ip
 export const uploadLimiter = () => build("upload", 30, 600); // 30 uploads / 10 min / user
+export const submissionLimiter = () => build("submission", 30, 600); // 30 submissions / 10 min / user
+export const gradeLimiter = () => build("grade", 120, 600); // 120 grades / 10 min / admin
 
 export function ipFromRequest(req: Request): string {
   const xf = req.headers.get("x-forwarded-for");

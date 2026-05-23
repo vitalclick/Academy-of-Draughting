@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getUserWithRole } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { StatusForm } from "@/components/StatusForm";
+import { LinkUserForm } from "@/components/LinkUserForm";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,9 @@ export default async function ApplicationDetailPage({ params }: { params: { id: 
             <span className="eyebrow">STATUS</span>
             <p className="mt-2 text-sm text-ink-3">Current: <strong>{data.status}</strong></p>
             <StatusForm id={data.id} current={data.status} />
+            {!data.user_id && (
+              <LinkUserForm applicationId={data.id} suggestedEmail={data.email} />
+            )}
           </div>
         </div>
       </div>

@@ -19,6 +19,10 @@ export type ProfileRole = "student" | "admin" | "faculty";
 
 export type OcrStatus = "pending" | "processing" | "done" | "failed" | "skipped";
 
+export type EnrollmentStatus = "active" | "completed" | "withdrawn";
+
+export type SubmissionStatus = "draft" | "submitted" | "graded" | "returned";
+
 export interface Database {
   public: {
     Tables: {
@@ -157,12 +161,183 @@ export interface Database {
           }
         ];
       };
+      modules: {
+        Row: {
+          id: string;
+          course_slug: string;
+          title: string;
+          description: string | null;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_slug: string;
+          title: string;
+          description?: string | null;
+          order_index?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          course_slug?: string;
+          title?: string;
+          description?: string | null;
+          order_index?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      enrollments: {
+        Row: {
+          id: string;
+          user_id: string;
+          course_slug: string;
+          cohort_label: string | null;
+          status: EnrollmentStatus;
+          enrolled_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          course_slug: string;
+          cohort_label?: string | null;
+          status?: EnrollmentStatus;
+          enrolled_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          course_slug?: string;
+          cohort_label?: string | null;
+          status?: EnrollmentStatus;
+          enrolled_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assignments: {
+        Row: {
+          id: string;
+          module_id: string;
+          title: string;
+          description: string | null;
+          due_at: string | null;
+          max_score: number;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          module_id: string;
+          title: string;
+          description?: string | null;
+          due_at?: string | null;
+          max_score?: number;
+          order_index?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          module_id?: string;
+          title?: string;
+          description?: string | null;
+          due_at?: string | null;
+          max_score?: number;
+          order_index?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "assignments_module_id_fkey";
+            columns: ["module_id"];
+            referencedRelation: "modules";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      submissions: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          user_id: string;
+          status: SubmissionStatus;
+          storage_path: string | null;
+          notes: string | null;
+          score: number | null;
+          feedback: string | null;
+          submitted_at: string | null;
+          graded_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          user_id: string;
+          status?: SubmissionStatus;
+          storage_path?: string | null;
+          notes?: string | null;
+          score?: number | null;
+          feedback?: string | null;
+          submitted_at?: string | null;
+          graded_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          assignment_id?: string;
+          user_id?: string;
+          status?: SubmissionStatus;
+          storage_path?: string | null;
+          notes?: string | null;
+          score?: number | null;
+          feedback?: string | null;
+          submitted_at?: string | null;
+          graded_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "submissions_assignment_id_fkey";
+            columns: ["assignment_id"];
+            referencedRelation: "assignments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "submissions_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
       current_user_role: {
         Args: Record<string, never>;
         Returns: string;
+      };
+      is_enrolled: {
+        Args: { course: string };
+        Returns: boolean;
+      };
+      is_admin_or_faculty: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      cohort_progress: {
+        Args: { course: string };
+        Returns: Json;
       };
       handle_new_user: {
         Args: Record<string, never>;
@@ -181,3 +356,19 @@ export type ApplicationUpdate = Database["public"]["Tables"]["applications"]["Up
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ApplicationDocument = Database["public"]["Tables"]["application_documents"]["Row"];
+
+export type Module = Database["public"]["Tables"]["modules"]["Row"];
+export type Enrollment = Database["public"]["Tables"]["enrollments"]["Row"];
+export type Assignment = Database["public"]["Tables"]["assignments"]["Row"];
+export type Submission = Database["public"]["Tables"]["submissions"]["Row"];
+
+export type CohortProgress = {
+  cohort_size: number;
+  my_score_total: number;
+  my_graded_count: number;
+  my_rank: number | null;
+  cohort_avg_score: number;
+  cohort_top_score: number;
+  max_possible: number;
+  assignment_count: number;
+};
