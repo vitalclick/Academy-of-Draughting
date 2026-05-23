@@ -54,6 +54,33 @@ export type DocumentRow = {
   uploaded_at: string;
 };
 
+export type ContentKind = 'blog_post' | 'faq' | 'testimonial' | 'page_section';
+export type ContentState = 'draft' | 'review' | 'published' | 'archived';
+
+export type ContentBlockRow = {
+  id: string;
+  kind: ContentKind;
+  state: ContentState;
+  slug: string | null;
+  title: string;
+  summary: string | null;
+  body: string | null;
+  metadata: Record<string, unknown>;
+  author_id: string | null;
+  ai_prompt: string | null;
+  ai_model: string | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminRow = {
+  user_id: string;
+  email: string;
+  role: 'staff' | 'super';
+  created_at: string;
+};
+
 export type EventRow = {
   id: number;
   occurred_at: string;
@@ -98,6 +125,22 @@ export type Database = {
         Row: EventRow;
         Insert: Omit<EventRow, 'id' | 'occurred_at'> & { occurred_at?: string };
         Update: Partial<Omit<EventRow, 'id'>>;
+        Relationships: [];
+      };
+      content_blocks: {
+        Row: ContentBlockRow;
+        Insert: Omit<ContentBlockRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<ContentBlockRow, 'id'>>;
+        Relationships: [];
+      };
+      admins: {
+        Row: AdminRow;
+        Insert: Omit<AdminRow, 'created_at'> & { created_at?: string };
+        Update: Partial<Omit<AdminRow, 'user_id'>>;
         Relationships: [];
       };
     };

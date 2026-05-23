@@ -40,9 +40,21 @@ const ServerEnvSchema = z.object({
   // Tracking-link JWT signing secret
   TRACKING_TOKEN_SECRET: z.string().optional(),
 
+  // Comma-separated allowlist of admin emails. First-time bootstrap before
+  // the admins table is populated. Empty in production once admins are seeded.
+  ADMIN_EMAILS: z.string().optional(),
+
   // Public analytics
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_META_PIXEL_ID: z.string().optional(),
+
+  // Error sink — receives POST {level,message,context} on captureError().
+  // Supports any HTTPS webhook (Sentry, Slack, Discord, custom).
+  ERROR_SINK_URL: z.string().url().optional(),
+  ERROR_SINK_TOKEN: z.string().optional(),
+
+  // Document retention — overrideable for testing
+  DOC_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
 });
 
 export const env = ServerEnvSchema.parse(process.env);
@@ -62,6 +74,7 @@ export const features = {
   ai: Boolean(env.ANTHROPIC_API_KEY),
   trackingTokens: Boolean(env.TRACKING_TOKEN_SECRET),
   analytics: Boolean(env.NEXT_PUBLIC_GA_MEASUREMENT_ID || env.NEXT_PUBLIC_META_PIXEL_ID),
+  errorSink: Boolean(env.ERROR_SINK_URL),
 };
 
 export function publicSiteUrl() {

@@ -213,9 +213,123 @@
   - Home page renders the personalization provider, exit-intent mount,
     and `?utm_campaign=…` still returns 200
 
-## Pending phases
-- **Phase 5** — Admin + AI Content Studio (CMS)
-- **Phase 6** — Hardening, security review, launch
+## Phase 5 — Admin workspace + Content Studio ✓
+### Auth + access control
+- Supabase Auth magic-link sign-in at `/admin/login`
+- `currentAdmin()` gates on Supabase session *and* either an `admins` row
+  OR membership in the `ADMIN_EMAILS` bootstrap allowlist
+- First sign-in via the allowlist auto-inserts the user into `admins`
+- `src/middleware.ts` refreshes the Supabase session cookie on every
+  `/admin/**` and `/api/admin/**` request
+- Route group `(authed)` so the protected shell only wraps protected
+  pages — login + callback inherit the root layout
+
+### Admin pages
+- `/admin` overview: live counts (apps by status, leads, 24h events,
+  content drafts) + recent applications + recent events
+- `/admin/applications` filterable table; `/admin/applications/[id]`
+  detail with applicant info, documents list and a status-update sidebar
+- `/admin/leads`: applicants who never completed an application
+- `/admin/events`: filterable event stream
+- Status changes write `application_status_changed` / `content_state_changed`
+  events with the admin's email attached
+
+### Content Studio
+- Four kinds (blog post, FAQ, testimonial, page section), three states
+  (draft → review → published; archived = soft delete)
+- Editor with AI draft generator using Claude with kind-specific prompts
+  grounded on the same knowledge base as the chatbot
+- Save / publish triggers `revalidatePath` so the public `/blog` route
+  updates immediately
+- AI metadata recorded on every row (`ai_prompt`, `ai_model`)
+
+### Public blog
+- `/blog` index + `/blog/[slug]` post pages, server-rendered, dynamic
+- Breadcrumb + article JSON-LD, OpenGraph metadata, canonical URL
+- Minimal in-house markdown renderer (`src/lib/markdown.ts`)
+- `sitemap.xml` automatically includes every published post
+
+### Database
+- `supabase/migrations/0003_admin.sql`:
+  - `admins` + `is_admin()` RPC
+  - `content_blocks` (kind + state enums, slug uniqueness for blog posts,
+    indexes on `(kind, state, updated_at)`)
+  - RLS: anon reads published `content_blocks`; admins read + write all;
+    admins read/update applications + read applicants/documents/events
+
+### Tests passed
+- `npm run build` ✓ — **38 routes** (5 protected admin pages, 2 new public
+  blog routes, Supabase middleware)
+- `npm run lint` clean
+- Smoke tests: `/admin` → 307 to login, `/admin/login` → 200 with the
+  "Supabase not configured" notice, `/blog` → 200 empty state,
+  `/blog/missing-post` → 404
+
+## Phase 6 — Hardening + launch ✓
+### Security headers
+- CSP locked to `default-src 'self'` with narrow allowlists per integration
+  (Anthropic, Resend, HubSpot, WhatsApp, Supabase, GA4, Meta Pixel) — no
+  `unsafe-inline` in `script-src`
+- X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy
+  strict-origin-when-cross-origin, Permissions-Policy disables camera /
+  mic / geolocation / FLoC, HSTS for 2 years with preload
+- `/admin/**` gets `X-Robots-Tag: noindex, nofollow` for belt-and-braces
+
+### Health + observability
+- `GET /api/health` liveness (always 200 with feature flags)
+- `GET /api/health?check=ready` pings Supabase, 503s if it can't reach
+- `captureError()` / `captureWarn()` (`src/lib/observability.ts`) posts to
+  any HTTPS sink (Sentry DSN / Slack / Discord / custom) when
+  `ERROR_SINK_URL` is set; always console-logs
+- Wired into `submitApplicationAction`; helpers ready for the rest
+- `error.tsx` + `global-error.tsx` route boundaries; both report
+  `client_error` / `global_error` to `/api/events`
+
+### POPIA data-subject rights
+- Public `/data-rights` page with access + delete request form
+- `POST /api/data-rights` returns **200 regardless of email existence** so
+  membership isn't leaked; emails a magic-link confirmation when there's
+  a record
+- `/data-rights/confirm?token=…` verifies a 48-hour JWT and either
+  renders the export inline (with JSON download) or anonymises the
+  applicant row
+- Both actions log audit events
+- Linked from the public footer
+
+### Document retention
+- `supabase/migrations/0004_retention.sql` adds
+  `public.purge_old_documents(retention_days)`
+- Deletes storage objects + `documents` rows for files older than the
+  window whose application is decided or stale
+- Schedulable via pg_cron — runbook in `docs/phase-6-setup.md`
+
+### Route-aware overlay components
+- `AidaWidget`, `ExitIntent`, `CookieBanner` use `usePathname()` and hide on
+  `/admin/**` and `/data-rights/confirm`; `ExitIntent` also avoids `/apply`
+- Closes the known Phase 5 limitation
+
+### Admin completeness
+- Document table in `/admin/applications/[id]` now renders signed-read URLs
+  per file via the Storage signed-URL helper
+- 5-minute TTL on the signed URLs; admins click → opens in a new tab
+
+### Tests passed
+- `npm run build` ✓ — **42 routes** including `/api/health`,
+  `/api/data-rights`, `/data-rights`, `/data-rights/confirm`,
+  `error.tsx`, `global-error.tsx`
+- `npm run lint` clean
+- Smoke tests:
+  - Security headers present on `/` (full CSP, HSTS, all extras)
+  - `/admin` adds X-Robots-Tag noindex
+  - `GET /api/health` → 200 with feature flags
+  - `GET /api/health?check=ready` → 200 with Supabase=not_configured
+  - `POST /api/data-rights` valid → 200, bad email → 400
+  - `/data-rights` → 200, `/data-rights/confirm` (no token) → 200 (renders
+    the "link expired" branch)
+
+## Pending
+Phase 6 is the final phase. See `docs/phase-6-setup.md` for the launch
+checklist and post-launch runbook.
 
 ## How to add a new page
 1. Add the route under `src/app/<route>/page.tsx`.
