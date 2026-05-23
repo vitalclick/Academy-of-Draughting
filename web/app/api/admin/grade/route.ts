@@ -4,6 +4,9 @@ import { getUserWithRole } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { isAllowedOrigin } from "@/lib/origin";
 import { gradeLimiter, ipFromRequest } from "@/lib/ratelimit";
+import { sendEmail, gradeFeedbackEmail } from "@/lib/email";
+import { env } from "@/lib/env";
+import { courses } from "@/data/courses";
 
 export const runtime = "nodejs";
 
@@ -44,9 +47,53 @@ export async function POST(req: Request) {
       graded_at: new Date().toISOString(),
     })
     .eq("id", body.submissionId)
-    .select("id, score, status, graded_at")
-    .single();
+    .select(
+      "id, score, status, graded_at, user_id, assignment_id, assignments!inner(title, max_score, module_id, modules!inner(course_slug))"
+    )
+    .single<{
+      id: string;
+      score: number | null;
+      status: "graded" | "returned";
+      graded_at: string;
+      user_id: string;
+      assignment_id: string;
+      assignments: {
+        title: string;
+        max_score: number;
+        module_id: string;
+        modules: { course_slug: string };
+      };
+    }>();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(data);
+  // Fire-and-forget grade email — no-op if Resend isn't configured.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email, full_name")
+    .eq("id", data.user_id)
+    .maybeSingle();
+  if (profile?.email) {
+    const courseSlug = data.assignments.modules.course_slug;
+    const courseTitle = courses.find((c) => c.slug === courseSlug)?.title ?? courseSlug;
+    await sendEmail({
+      to: profile.email,
+      ...gradeFeedbackEmail({
+        fullName: profile.full_name ?? profile.email,
+        assignmentTitle: data.assignments.title,
+        courseTitle,
+        status: data.status,
+        score: data.score,
+        maxScore: data.assignments.max_score,
+        feedback: body.feedback?.trim() || null,
+        portalUrl: `${env().NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")}/portal`,
+      }),
+    });
+  }
+
+  return NextResponse.json({
+    id: data.id,
+    status: data.status,
+    score: data.score,
+    graded_at: data.graded_at,
+  });
 }

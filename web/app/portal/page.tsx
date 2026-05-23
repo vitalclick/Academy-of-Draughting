@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSupabaseServer, getUserWithRole } from "@/lib/supabase/server";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { SubmitWork } from "@/components/SubmitWork";
+import { AssignmentTutor } from "@/components/AssignmentTutor";
 import { courses } from "@/data/courses";
 import type {
   Application,
@@ -231,16 +232,22 @@ export default async function PortalPage() {
                                           <p className="mt-1 whitespace-pre-line">{sub.feedback}</p>
                                         </div>
                                       )}
-                                      <div className="mt-3 flex justify-end">
-                                        <SubmitWork
-                                          assignmentId={a.id}
-                                          currentStatus={status as
-                                            | "draft"
-                                            | "submitted"
-                                            | "graded"
-                                            | "returned"
-                                            | "not started"}
-                                        />
+                                      <div className="mt-3 space-y-3">
+                                        <div className="flex flex-wrap items-center justify-end gap-2">
+                                          <AssignmentTutor
+                                            assignmentId={a.id}
+                                            assignmentTitle={a.title}
+                                          />
+                                          <SubmitWork
+                                            assignmentId={a.id}
+                                            currentStatus={status as
+                                              | "draft"
+                                              | "submitted"
+                                              | "graded"
+                                              | "returned"
+                                              | "not started"}
+                                          />
+                                        </div>
                                       </div>
                                     </li>
                                   );

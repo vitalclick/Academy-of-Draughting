@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getUserWithRole } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { GradeForm } from "@/components/GradeForm";
+import { EnrollForm, EnrollmentStatusSelect } from "@/components/EnrollForm";
 import { courses } from "@/data/courses";
 import type {
   Assignment,
@@ -91,7 +92,7 @@ export default async function CohortDetailPage({ params }: Params) {
   return (
     <section className="bg-paper">
       <div className="container-page py-12">
-        <div className="flex items-baseline justify-between">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Link href="/admin/cohorts" className="mono text-[12px] text-ink-3 hover:text-ink-1">
               ← Cohorts
@@ -105,6 +106,10 @@ export default async function CohortDetailPage({ params }: Params) {
               assignments
             </div>
           </div>
+          <EnrollForm
+            courseSlug={params.slug}
+            defaultCohort={enrollments[0]?.cohort_label ?? null}
+          />
         </div>
 
         {enrollments.length === 0 ? (
@@ -123,10 +128,17 @@ export default async function CohortDetailPage({ params }: Params) {
                     <h2 className="text-lg font-medium">
                       {enrollment.profile?.full_name ?? enrollment.profile?.email ?? "Unknown"}
                     </h2>
-                    <div className="mono text-[11px] text-ink-4">
-                      {enrollment.profile?.email ?? "—"} · enrolled{" "}
-                      {new Date(enrollment.enrolled_at).toLocaleDateString()} ·{" "}
-                      <span className="uppercase">{enrollment.status}</span>
+                    <div className="mono flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-4">
+                      <span>{enrollment.profile?.email ?? "—"}</span>
+                      <span>·</span>
+                      <span>
+                        enrolled {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                      </span>
+                      <span>·</span>
+                      <EnrollmentStatusSelect
+                        enrollmentId={enrollment.id}
+                        current={enrollment.status}
+                      />
                     </div>
                   </div>
                 </header>
