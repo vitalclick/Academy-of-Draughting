@@ -23,6 +23,8 @@ export type EnrollmentStatus = "active" | "completed" | "withdrawn";
 
 export type SubmissionStatus = "draft" | "submitted" | "graded" | "returned";
 
+export type DeletionRequestStatus = "pending" | "processing" | "completed" | "rejected";
+
 export interface Database {
   public: {
     Tables: {
@@ -39,6 +41,8 @@ export interface Database {
           notes: string | null;
           status: ApplicationStatus;
           user_id: string | null;
+          upload_token: string | null;
+          upload_token_expires_at: string | null;
         };
         Insert: {
           id?: string;
@@ -52,6 +56,8 @@ export interface Database {
           notes?: string | null;
           status?: ApplicationStatus;
           user_id?: string | null;
+          upload_token?: string | null;
+          upload_token_expires_at?: string | null;
         };
         Update: {
           id?: string;
@@ -65,6 +71,8 @@ export interface Database {
           notes?: string | null;
           status?: ApplicationStatus;
           user_id?: string | null;
+          upload_token?: string | null;
+          upload_token_expires_at?: string | null;
         };
         Relationships: [
           {
@@ -314,6 +322,49 @@ export interface Database {
           },
           {
             foreignKeyName: "submissions_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      data_deletion_requests: {
+        Row: {
+          id: string;
+          user_id: string;
+          user_email: string;
+          reason: string | null;
+          status: DeletionRequestStatus;
+          requested_at: string;
+          processed_at: string | null;
+          processed_by: string | null;
+          processed_notes: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          user_email: string;
+          reason?: string | null;
+          status?: DeletionRequestStatus;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          processed_notes?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          user_email?: string;
+          reason?: string | null;
+          status?: DeletionRequestStatus;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          processed_notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "data_deletion_requests_user_id_fkey";
             columns: ["user_id"];
             referencedRelation: "users";
             referencedColumns: ["id"];

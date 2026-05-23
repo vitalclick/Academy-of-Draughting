@@ -67,15 +67,19 @@ export async function POST(req: Request) {
         status: "received",
         user_id: userId,
       })
-      .select("id")
+      .select("id, upload_token, upload_token_expires_at")
       .single();
 
     if (error) throw error;
 
-    // Fire-and-await notifications. Failures don't block the response.
     await notify(input, data.id).catch(() => undefined);
 
-    return NextResponse.json({ id: data.id, status: "received" });
+    return NextResponse.json({
+      id: data.id,
+      status: "received",
+      uploadToken: data.upload_token,
+      uploadTokenExpiresAt: data.upload_token_expires_at,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });

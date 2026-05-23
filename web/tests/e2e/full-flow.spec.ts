@@ -76,9 +76,10 @@ test("apply → admin accept → portal → submit → grade → student sees fe
   const adminCtx = await browser.newContext();
   const adminPage = await adminCtx.newPage();
   await adminPage.goto("/login");
+  await adminPage.getByRole("button", { name: /use a password instead/i }).click();
   await adminPage.getByLabel(/email/i).fill(adminEmail);
   await adminPage.getByLabel(/password/i).fill(PASSWORD);
-  await adminPage.getByRole("button", { name: /sign in/i }).click();
+  await adminPage.getByRole("button", { name: /^sign in$/i }).click();
   await adminPage.waitForURL(/\/(portal|admin|$)/, { timeout: 15_000 });
 
   await adminPage.goto(`/admin/applications/${linkedApp!.id}`);
@@ -102,9 +103,10 @@ test("apply → admin accept → portal → submit → grade → student sees fe
   const studentCtx = await browser.newContext();
   const studentPage = await studentCtx.newPage();
   await studentPage.goto("/login");
+  await studentPage.getByRole("button", { name: /use a password instead/i }).click();
   await studentPage.getByLabel(/email/i).fill(studentEmail);
   await studentPage.getByLabel(/password/i).fill(PASSWORD);
-  await studentPage.getByRole("button", { name: /sign in/i }).click();
+  await studentPage.getByRole("button", { name: /^sign in$/i }).click();
   await studentPage.waitForURL(/\/portal/, { timeout: 15_000 });
 
   // The "Mechanical Draughting & Design — N4/N5" enrollment card should render.

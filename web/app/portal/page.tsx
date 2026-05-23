@@ -5,6 +5,7 @@ import { DocumentUpload } from "@/components/DocumentUpload";
 import { SubmitWork } from "@/components/SubmitWork";
 import { AssignmentTutor } from "@/components/AssignmentTutor";
 import { CourseProgress } from "@/components/CourseProgress";
+import { YourData } from "@/components/YourData";
 import { courses } from "@/data/courses";
 import type {
   Application,
@@ -322,6 +323,8 @@ export default async function PortalPage() {
             </div>
           )}
         </div>
+
+        <YourData />
       </div>
     </section>
   );
