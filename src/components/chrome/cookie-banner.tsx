@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const STORAGE_KEY = 'aoad_cookie_consent_v1';
 
-const HIDDEN_ROUTES = ['/admin', '/data-rights/confirm'];
+const HIDDEN_ROUTES = ['/admin', '/portal', '/data-rights/confirm'];
 
 export function CookieBanner() {
   const pathname = usePathname();

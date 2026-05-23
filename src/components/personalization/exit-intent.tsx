@@ -8,7 +8,7 @@ import { track } from '@/lib/analytics/events';
 const STORAGE_KEY = 'aoad_exit_intent_v1';
 const SUPPRESS_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
-const HIDDEN_ROUTES = ['/admin', '/apply', '/data-rights'];
+const HIDDEN_ROUTES = ['/admin', '/portal', '/apply', '/data-rights'];
 
 function suppressed(): boolean {
   if (typeof window === 'undefined') return true;

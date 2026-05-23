@@ -327,9 +327,69 @@
   - `/data-rights` → 200, `/data-rights/confirm` (no token) → 200 (renders
     the "link expired" branch)
 
+## Phase 7 — Student portal ✓
+### Auth
+- Magic-link sign-in at `/portal/login` (separate from `/admin/login` —
+  same Supabase Auth, different post-sign-in routing)
+- `currentStudent()` helper: requires a Supabase session **and** at least
+  one `enrollments` row for that user; returns the student's enrollments
+- Middleware refreshes the Supabase cookie on every `/portal/**` request
+- Route group `(authed)` so login + callback render without the portal
+  shell
+
+### Pages
+- `/portal` dashboard: per-enrolment summary cards (open / overdue / total
+  assignments) and a "due soon" table
+- `/portal/courses/[id]` per-enrolment assignment list with state +
+  grade columns
+- `/portal/courses/[id]/assignments/[assignmentId]` brief + submission
+  panel; shows feedback + grade when graded, otherwise the submit form
+
+### Submissions
+- Comment-based submission (file upload deferred to 7.1 — the schema +
+  storage bucket are already in place)
+- Server action upserts the `submissions` row, flips between
+  `draft` and `submitted`, logs `submission_saved` /
+  `submission_submitted` events
+- Triggers `revalidatePath` on all three portal routes so the dashboard
+  updates immediately
+
+### Schema (`supabase/migrations/0005_portal.sql`)
+- `enrollments` (user_id → applicant_id → application_id chain, programme
+  + cohort, state enum)
+- `assignments` (programme + optional cohort, kind enum, weight, published
+  flag)
+- `submissions` (one row per enrollment×assignment, state enum, optional
+  storage_path for future file upload, grade + feedback fields)
+- `student-submissions` private storage bucket
+- `public.is_student()` helper
+- RLS:
+  - Students read only their own enrollments + submissions
+  - Students see published assignments for programmes they're enrolled in
+  - Students insert / update only their own draft submissions
+  - Admins (via `is_admin()`) see + write everything
+
+### Tests passed
+- `npm run build` ✓ — **46 routes**, including 4 new portal routes
+- `npm run lint` clean
+- Smoke tests:
+  - `/portal` → 307 → `/portal/login`
+  - `/portal/login` → 200 with STUDENT PORTAL branding
+  - `/portal/courses/anything` → 307 (redirected by `(authed)` layout)
+- Route-aware overlays (AIDA, ExitIntent, cookie banner) hidden on
+  `/portal` just like `/admin`
+
 ## Pending
-Phase 6 is the final phase. See `docs/phase-6-setup.md` for the launch
-checklist and post-launch runbook.
+Phase 7 closes out the planned roadmap. See `docs/phase-6-setup.md` for
+the launch checklist; the student portal can launch alongside or
+behind a feature flag.
+
+Likely follow-ups:
+- **7.1** — File-upload submissions (storage bucket + signed URLs already
+  there, just needs the UI + OCR/preview)
+- **7.2** — Admin grading view at `/admin/submissions`
+- **7.3** — AI drawing critique (Claude vision against drawing-office
+  standards)
 
 ## How to add a new page
 1. Add the route under `src/app/<route>/page.tsx`.
