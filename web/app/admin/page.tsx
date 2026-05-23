@@ -52,7 +52,12 @@ export default async function AdminApplicationsPage({
           <div>
             <span className="eyebrow">ADMIN · APPLICATIONS</span>
             <h1 className="mt-2 text-3xl font-medium">Applications</h1>
-            <p className="text-sm text-ink-3">{rows.length} shown · most recent first</p>
+            <p className="text-sm text-ink-3">
+              {rows.length} shown · most recent first ·{" "}
+              <Link href="/admin/cohorts" className="text-electric-600 hover:underline">
+                cohorts →
+              </Link>
+            </p>
           </div>
           <div className="flex flex-wrap gap-1 rounded-md border border-paper-3 bg-white p-1 text-[12px]">
             <Filter label="All" href="/admin" active={!statusFilter} count={counts.total} />

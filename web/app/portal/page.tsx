@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSupabaseServer, getUserWithRole } from "@/lib/supabase/server";
 import { DocumentUpload } from "@/components/DocumentUpload";
+import { SubmitWork } from "@/components/SubmitWork";
 import { courses } from "@/data/courses";
 import type {
   Application,
@@ -196,25 +197,51 @@ export default async function PortalPage() {
                                   return (
                                     <li
                                       key={a.id}
-                                      className="flex flex-wrap items-baseline justify-between gap-2 rounded border border-white/5 bg-navy-900/40 px-4 py-3"
+                                      className="rounded border border-white/5 bg-navy-900/40 px-4 py-3"
                                     >
-                                      <div className="min-w-0">
-                                        <div className="text-sm font-medium">{a.title}</div>
-                                        <div className={`mono text-[11px] ${dueTone}`}>
-                                          {due.text} · max {a.max_score}
-                                          {sub?.score != null && (
-                                            <span className="text-electric-300">
-                                              {" "}
-                                              · scored {sub.score}/{a.max_score}
-                                            </span>
-                                          )}
+                                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                        <div className="min-w-0">
+                                          <div className="text-sm font-medium">{a.title}</div>
+                                          <div className={`mono text-[11px] ${dueTone}`}>
+                                            {due.text} · max {a.max_score}
+                                            {sub?.score != null && (
+                                              <span className="text-electric-300">
+                                                {" "}
+                                                · scored {sub.score}/{a.max_score}
+                                              </span>
+                                            )}
+                                          </div>
                                         </div>
+                                        <span
+                                          className={`mono rounded-full px-2.5 py-0.5 text-[11px] capitalize ${statusTone}`}
+                                        >
+                                          {status}
+                                        </span>
                                       </div>
-                                      <span
-                                        className={`mono rounded-full px-2.5 py-0.5 text-[11px] capitalize ${statusTone}`}
-                                      >
-                                        {status}
-                                      </span>
+                                      {a.description && (
+                                        <p className="mt-2 text-[12px] text-white/55">
+                                          {a.description}
+                                        </p>
+                                      )}
+                                      {sub?.feedback && (
+                                        <div className="mt-2 rounded border border-amber-500/20 bg-amber-500/5 p-2 text-[12px] text-amber-100">
+                                          <span className="mono text-[10px] uppercase text-amber-300">
+                                            Reviewer feedback
+                                          </span>
+                                          <p className="mt-1 whitespace-pre-line">{sub.feedback}</p>
+                                        </div>
+                                      )}
+                                      <div className="mt-3 flex justify-end">
+                                        <SubmitWork
+                                          assignmentId={a.id}
+                                          currentStatus={status as
+                                            | "draft"
+                                            | "submitted"
+                                            | "graded"
+                                            | "returned"
+                                            | "not started"}
+                                        />
+                                      </div>
                                     </li>
                                   );
                                 })}
