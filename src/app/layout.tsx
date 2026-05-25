@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { AidaProvider } from '@/components/chrome/aida-context';
 import { AidaWidget } from '@/components/chrome/aida-widget';
+import { WhatsAppFab } from '@/components/chrome/whatsapp-fab';
+import { ServiceWorkerRegister } from '@/components/chrome/service-worker';
 import { CookieBanner } from '@/components/chrome/cookie-banner';
 import { Analytics } from '@/components/chrome/analytics';
 import { PersonalizationProvider } from '@/components/personalization/provider';
@@ -84,11 +86,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AidaProvider>
             {children}
             <AidaWidget />
+            <WhatsAppFab />
+            <ServiceWorkerRegister />
             <CookieBanner />
             <ExitIntent />
             <Analytics
               gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
               pixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID}
+              posthogKey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
+              posthogHost={process.env.NEXT_PUBLIC_POSTHOG_HOST}
             />
           </AidaProvider>
         </PersonalizationProvider>

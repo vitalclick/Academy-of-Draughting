@@ -65,15 +65,15 @@ export function SiteFooter() {
 
             <FooterCol title="Apply">
               <Link href="/apply">Start Application</Link>
-              <Link href="/apply#funding">Funding &amp; Payment</Link>
-              <Link href="/apply#entry">Entry Requirements</Link>
+              <Link href="/funding">Fees &amp; Funding</Link>
+              <Link href="/book">Book a Consultation</Link>
               <Link href="/apply#intake">Intake Dates</Link>
             </FooterCol>
 
             <FooterCol title="Campus">
-              <Link href="/about#jhb">Johannesburg</Link>
-              <Link href="/about#dbn">Durban</Link>
-              <Link href="/about#online">Online · Nationwide</Link>
+              <Link href="/campus/johannesburg">Johannesburg</Link>
+              <Link href="/campus/durban">Durban</Link>
+              <Link href="/campus/online">Online · Nationwide</Link>
               <Link href="/contact">Visit Us</Link>
             </FooterCol>
 
@@ -86,8 +86,8 @@ export function SiteFooter() {
                 Admissions Chat
               </button>
               <Link href="/career">Career Counsellor</Link>
+              <Link href="/resources/draughting-careers-2026">Career &amp; Salary Guide</Link>
               <Link href="/portal">Student Portal</Link>
-              <Link href="/courses">Programme Recommender</Link>
             </FooterCol>
           </div>
         </div>

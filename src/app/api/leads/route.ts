@@ -14,7 +14,7 @@ const Schema = z.object({
   segment: z.string().max(40).optional(),
 });
 
-const LEAD_MAGNET_URL = '/downloads/sa-draughting-careers-2026.pdf';
+const LEAD_MAGNET_URL = '/resources/draughting-careers-2026';
 
 function leadEmailBody(firstName: string | undefined) {
   const greeting = firstName ? `Hi ${firstName.replace(/[<>&"']/g, '')}` : 'Hi';

@@ -53,4 +53,7 @@ export function track(name: string, payload?: Record<string, unknown>) {
   // Meta Pixel
   const w2 = window as unknown as { fbq?: (...args: unknown[]) => void };
   if (w2.fbq) w2.fbq('trackCustom', name, payload ?? {});
+  // PostHog
+  const w3 = window as unknown as { posthog?: { capture?: (n: string, p?: unknown) => void } };
+  if (w3.posthog?.capture) w3.posthog.capture(name, payload ?? {});
 }

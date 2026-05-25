@@ -37,6 +37,15 @@ const ServerEnvSchema = z.object({
   // HubSpot CRM
   HUBSPOT_PRIVATE_APP_TOKEN: z.string().optional(),
 
+  // Payfast — online deposit payments (South African gateway)
+  PAYFAST_MERCHANT_ID: z.string().optional(),
+  PAYFAST_MERCHANT_KEY: z.string().optional(),
+  PAYFAST_PASSPHRASE: z.string().optional(),
+  PAYFAST_SANDBOX: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+
   // Tracking-link JWT signing secret
   TRACKING_TOKEN_SECRET: z.string().optional(),
 
@@ -47,6 +56,11 @@ const ServerEnvSchema = z.object({
   // Public analytics
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_META_PIXEL_ID: z.string().optional(),
+  // Meta Conversions API — server-side, privacy-resilient conversion tracking
+  META_CAPI_ACCESS_TOKEN: z.string().optional(),
+  // PostHog — product analytics, funnels, session replay (POPIA-friendly self-host)
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
 
   // Error sink — receives POST {level,message,context} on captureError().
   // Supports any HTTPS webhook (Sentry, Slack, Discord, custom).
@@ -75,9 +89,12 @@ export const features = {
   resend: Boolean(env.RESEND_API_KEY && env.RESEND_FROM),
   whatsapp: Boolean(env.WHATSAPP_PHONE_ID && env.WHATSAPP_TOKEN),
   hubspot: Boolean(env.HUBSPOT_PRIVATE_APP_TOKEN),
+  payments: Boolean(env.PAYFAST_MERCHANT_ID && env.PAYFAST_MERCHANT_KEY),
   ai: Boolean(env.ANTHROPIC_API_KEY),
   trackingTokens: Boolean(env.TRACKING_TOKEN_SECRET),
   analytics: Boolean(env.NEXT_PUBLIC_GA_MEASUREMENT_ID || env.NEXT_PUBLIC_META_PIXEL_ID),
+  metaCapi: Boolean(env.NEXT_PUBLIC_META_PIXEL_ID && env.META_CAPI_ACCESS_TOKEN),
+  posthog: Boolean(env.NEXT_PUBLIC_POSTHOG_KEY),
   errorSink: Boolean(env.ERROR_SINK_URL),
 };
 

@@ -8,6 +8,14 @@ const SUPABASE_HOST = (() => {
   }
 })();
 
+const POSTHOG_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com').origin;
+  } catch {
+    return 'https://eu.i.posthog.com';
+  }
+})();
+
 /**
  * Content-Security-Policy. Strict by default; opens narrow holes for the
  * specific integrations we use.
@@ -25,6 +33,7 @@ function buildCsp() {
     'https://www.googletagmanager.com',
     'https://www.google-analytics.com',
     'https://connect.facebook.net',
+    POSTHOG_HOST,
   ];
   const connectSrc = [
     "'self'",
@@ -35,6 +44,7 @@ function buildCsp() {
     'https://api.resend.com',
     'https://api.hubapi.com',
     'https://graph.facebook.com',
+    POSTHOG_HOST,
   ];
   if (SUPABASE_HOST) {
     scriptSrc.push(`https://${SUPABASE_HOST}`);
@@ -53,7 +63,7 @@ function buildCsp() {
     `connect-src ${connectSrc.join(' ')}`,
     `frame-ancestors 'none'`,
     `base-uri 'self'`,
-    `form-action 'self' ${SITE_URL}`,
+    `form-action 'self' ${SITE_URL} https://www.payfast.co.za https://sandbox.payfast.co.za`,
     `object-src 'none'`,
     `upgrade-insecure-requests`,
   ].join('; ');

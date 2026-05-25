@@ -5,6 +5,7 @@ export const SITE = {
   url: 'https://academydraughting.com',
   email: 'enroll@academydraughting.com',
   phone: '+27 68 110 0746',
+  whatsappNumber: '27681100746',
   whatsappJhb: 'https://wa.me/27681100746',
   whatsappDbn: 'https://wa.me/27681100746',
   description:
@@ -18,6 +19,7 @@ export const NAV_ITEMS = [
   { key: 'home', label: 'Home', href: '/' },
   { key: 'courses', label: 'Courses', href: '/courses' },
   { key: 'career', label: 'Career Hub', href: '/career' },
+  { key: 'funding', label: 'Fees & Funding', href: '/funding' },
   { key: 'about', label: 'About', href: '/about' },
   { key: 'apply', label: 'Apply', href: '/apply' },
   { key: 'contact', label: 'Contact', href: '/contact' },
