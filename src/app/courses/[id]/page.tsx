@@ -6,6 +6,7 @@ import { FinalCTA } from '@/components/ui/final-cta';
 import { BreadcrumbJsonLd, CourseJsonLd, FaqJsonLd } from '@/seo/json-ld';
 import { CourseVisSvg } from '@/sections/courses/course-vis';
 import { COURSES, getCourseById } from '@/data/courses';
+import { OG_IMAGE } from '@/lib/site';
 
 export const dynamicParams = false;
 
@@ -30,6 +31,7 @@ export async function generateMetadata({
       description: c.desc,
       url: `/courses/${c.id}`,
       type: 'article',
+      images: [{ url: OG_IMAGE.url, width: OG_IMAGE.width, height: OG_IMAGE.height, alt: OG_IMAGE.alt }],
     },
   };
 }

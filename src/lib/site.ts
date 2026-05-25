@@ -15,6 +15,16 @@ export const SITE = {
   },
 };
 
+// Default social sharing image. Relative path is resolved to an absolute URL
+// by Next.js via `metadataBase` (set in the root layout).
+export const OG_IMAGE = {
+  url: '/og/og-default.jpg',
+  width: 1200,
+  height: 630,
+  type: 'image/jpeg',
+  alt: 'The Academy of Advanced Draughting — engineering careers start here. Specialist draughting & CAD training in South Africa since 1981.',
+} as const;
+
 export const NAV_ITEMS = [
   { key: 'home', label: 'Home', href: '/' },
   { key: 'courses', label: 'Courses', href: '/courses' },
