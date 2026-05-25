@@ -41,6 +41,7 @@ Copy these into Vercel → Project → Settings → Environment Variables. All a
 | `ERROR_SINK_URL` | Optional. Observability webhook. |
 | `ERROR_SINK_TOKEN` | Optional. Bearer token for the sink. |
 | `DOC_RETENTION_DAYS` | Optional. Defaults to `90`. |
+| `CRON_SECRET` | Authenticates the Vercel Cron retention purge. `openssl rand -hex 32`. |
 
 ### Per-environment overrides
 
@@ -59,8 +60,35 @@ Copy these into Vercel → Project → Settings → Environment Variables. All a
 - `/api/leads`, `/api/data-rights` — 15s.
 - `/api/events` — 10s.
 - `/api/health` — 5s.
+- `/api/cron/purge-documents` — 60s (scheduled).
 
-All API routes already declare `export const runtime = 'nodejs'` where needed.
+All API routes run on the Node.js runtime (`export const runtime = 'nodejs'`). There are no Edge-runtime routes or Supabase Edge Functions.
+
+## Scheduled jobs (Vercel Cron)
+
+`vercel.json` registers one cron:
+
+- **`/api/cron/purge-documents`** — daily at 03:00 UTC. Calls the
+  `purge_old_documents()` Postgres function to delete applicant ID/matric
+  images older than `DOC_RETENTION_DAYS` (POPIA Section 14).
+
+Requirements:
+
+1. `CRON_SECRET` must be set in the environment. Vercel automatically attaches
+   it as `Authorization: Bearer <CRON_SECRET>` on scheduled invocations; the
+   route rejects anything else with 401, so the endpoint isn't publicly
+   triggerable. Generate with `openssl rand -hex 32`.
+2. The `0004_retention.sql` migration must be applied (it defines
+   `purge_old_documents`).
+3. Cron jobs only run on the **production** deployment.
+
+Manual test (replace the secret):
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  https://academydraughting.com/api/cron/purge-documents
+# -> { "ok": true, "removed": 0, "retention_days": 90, ... }
+```
 
 ## Domains
 

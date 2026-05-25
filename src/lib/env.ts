@@ -55,6 +55,10 @@ const ServerEnvSchema = z.object({
 
   // Document retention — overrideable for testing
   DOC_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
+
+  // Shared secret for authenticating Vercel Cron invocations. Vercel sends it
+  // as `Authorization: Bearer <CRON_SECRET>` on scheduled requests.
+  CRON_SECRET: z.string().optional(),
 });
 
 export const env = ServerEnvSchema.parse(process.env);
