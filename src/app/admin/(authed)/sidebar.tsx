@@ -12,8 +12,8 @@ const NAV: NavItem[] = [
   { k: 'overview', l: 'Overview', ic: '◫', href: '/admin' },
   { k: 'applications', l: 'Applications', ic: '◇', href: '/admin/applications', count: 0, urgent: true },
   { k: 'leads', l: 'Leads', ic: '◍', href: '/admin/leads' },
-  { k: 'students', l: 'Students', ic: '◉', href: '/admin/students', count: 248 },
-  { k: 'communications', l: 'Communications', ic: '✉', href: '/admin/communications', count: 12 },
+  { k: 'students', l: 'Students', ic: '◉', href: '/admin/students' },
+  { k: 'communications', l: 'Communications', ic: '✉', href: '/admin/communications' },
   { sec: 'ACADEMIC' },
   { k: 'programmes', l: 'Programmes', ic: '◰', href: '/admin/programmes' },
   { k: 'schedule', l: 'Schedule', ic: '☰', href: '/admin/schedule' },
@@ -38,10 +38,12 @@ export function AdminSidebar({
   email,
   role,
   applicationsCount,
+  studentsCount,
 }: {
   email: string;
   role: string;
   applicationsCount: number;
+  studentsCount: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -77,7 +79,12 @@ export function AdminSidebar({
             </div>
           );
         }
-        const count = item.k === 'applications' ? applicationsCount : item.count;
+        const count =
+          item.k === 'applications'
+            ? applicationsCount
+            : item.k === 'students'
+              ? studentsCount
+              : item.count;
         return (
           <Link
             key={item.k}
