@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { PageShell } from '@/components/chrome/page-shell';
 import { FinalCTA } from '@/components/ui/final-cta';
 import { AccreditationStrip } from '@/components/ui/accreditation-strip';
+import { SocialProof } from '@/components/ui/social-proof';
 import { BookingForm } from '@/sections/consultation/booking-form';
 import { BreadcrumbJsonLd, CourseJsonLd } from '@/seo/json-ld';
 import { CAMPUSES, getCampus, coursesForCampus } from '@/data/campuses';
@@ -118,6 +119,7 @@ export default async function CampusPage({ params }: { params: Promise<{ city: s
       </section>
 
       <AccreditationStrip />
+      <SocialProof />
 
       <section className="section section-paper">
         <div className="page" style={{ maxWidth: 720 }}>

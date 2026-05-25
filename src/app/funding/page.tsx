@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { PageShell } from '@/components/chrome/page-shell';
 import { FinalCTA } from '@/components/ui/final-cta';
 import { AccreditationStrip } from '@/components/ui/accreditation-strip';
+import { SocialProof } from '@/components/ui/social-proof';
 import { FundingCalculator } from '@/sections/funding/funding-calculator';
 import { BreadcrumbJsonLd, FaqJsonLd } from '@/seo/json-ld';
 
@@ -48,6 +49,7 @@ export default function FundingPage() {
 
       <FundingCalculator />
       <AccreditationStrip />
+      <SocialProof />
 
       <section id="faq" className="section section-paper" data-screen-label="Funding · FAQ">
         <div className="page">

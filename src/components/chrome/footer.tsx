@@ -86,8 +86,8 @@ export function SiteFooter() {
                 Admissions Chat
               </button>
               <Link href="/career">Career Counsellor</Link>
+              <Link href="/resources/draughting-careers-2026">Career &amp; Salary Guide</Link>
               <Link href="/portal">Student Portal</Link>
-              <Link href="/courses">Programme Recommender</Link>
             </FooterCol>
           </div>
         </div>

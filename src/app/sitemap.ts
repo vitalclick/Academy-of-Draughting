@@ -18,6 +18,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: '/apply', priority: 0.9 },
     { url: '/contact', priority: 0.6 },
     { url: '/book', priority: 0.8 },
+    { url: '/resources', priority: 0.6 },
+    { url: '/resources/draughting-careers-2026', priority: 0.7 },
     { url: '/privacy', priority: 0.2 },
     { url: '/terms', priority: 0.2 },
     { url: '/popia', priority: 0.2 },
