@@ -18,9 +18,9 @@ export const SITE = {
 export const NAV_ITEMS = [
   { key: 'home', label: 'Home', href: '/' },
   { key: 'courses', label: 'Courses', href: '/courses' },
+  { key: 'about', label: 'About', href: '/about' },
   { key: 'career', label: 'Career Hub', href: '/career' },
   { key: 'funding', label: 'Fees & Funding', href: '/funding' },
-  { key: 'about', label: 'About', href: '/about' },
   { key: 'apply', label: 'Apply', href: '/apply' },
   { key: 'contact', label: 'Contact', href: '/contact' },
 ] as const;
