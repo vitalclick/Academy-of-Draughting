@@ -42,12 +42,17 @@ export default async function SignaturesPage({
 
   return (
     <div>
-      <div className="admin-header">
-        <h1 className="t-h2">Email signatures</h1>
-        <p className="t-body" style={{ color: 'var(--ink-3)', marginTop: 8 }}>
-          Generate on-brand HTML signatures for the team. Save a signature to keep it on file —
-          handy when someone changes role or moves campus and the signature needs regenerating.
-        </p>
+      <div className="adm-page-head">
+        <div>
+          <div className="breadcrumb">
+            CONTENT<span className="sep">/</span>SIGNATURES
+          </div>
+          <h1>Email signatures</h1>
+          <p>
+            Generate on-brand HTML signatures for the team. Save a signature to keep it on file —
+            handy when someone changes role or moves campus and the signature needs regenerating.
+          </p>
+        </div>
       </div>
 
       {params.saved === '1' && (
