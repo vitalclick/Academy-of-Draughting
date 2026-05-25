@@ -48,7 +48,9 @@ export default async function ApplicationsPage({
           <p>Review submissions, track status, and issue offers.</p>
         </div>
         <div className="adm-actions">
-          <button type="button" className="btn btn-sm btn-ghost-light">Export CSV</button>
+          <Link href="/admin/applications/new" className="btn btn-sm btn-primary">
+            + New application
+          </Link>
         </div>
       </div>
 

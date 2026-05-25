@@ -41,6 +41,9 @@ export function AdminTopBar() {
         <Link href="/" className="btn btn-sm btn-ghost-light">
           View public site ↗
         </Link>
+        <Link href="/admin/applications/new" className="btn btn-sm btn-primary">
+          + New application
+        </Link>
       </div>
     </header>
   );
