@@ -23,6 +23,20 @@ export type EnrollmentStatus = "active" | "completed" | "withdrawn";
 
 export type SubmissionStatus = "draft" | "submitted" | "graded" | "returned";
 
+export type ScanStatus = "pending" | "clean" | "infected" | "skipped" | "error";
+
+export type DeletionRequestStatus = "pending" | "processing" | "completed" | "rejected";
+
+export type EmailEvent =
+  | "email.sent"
+  | "email.delivered"
+  | "email.delivery_delayed"
+  | "email.bounced"
+  | "email.complained"
+  | "email.opened"
+  | "email.clicked"
+  | (string & {});
+
 export interface Database {
   public: {
     Tables: {
@@ -39,6 +53,8 @@ export interface Database {
           notes: string | null;
           status: ApplicationStatus;
           user_id: string | null;
+          upload_token: string | null;
+          upload_token_expires_at: string | null;
         };
         Insert: {
           id?: string;
@@ -52,6 +68,8 @@ export interface Database {
           notes?: string | null;
           status?: ApplicationStatus;
           user_id?: string | null;
+          upload_token?: string | null;
+          upload_token_expires_at?: string | null;
         };
         Update: {
           id?: string;
@@ -65,6 +83,8 @@ export interface Database {
           notes?: string | null;
           status?: ApplicationStatus;
           user_id?: string | null;
+          upload_token?: string | null;
+          upload_token_expires_at?: string | null;
         };
         Relationships: [
           {
@@ -121,6 +141,7 @@ export interface Database {
           ocr_status: OcrStatus;
           ocr_result: Json | null;
           created_at: string;
+          scan_status: ScanStatus;
         };
         Insert: {
           id?: string;
@@ -133,6 +154,7 @@ export interface Database {
           ocr_status?: OcrStatus;
           ocr_result?: Json | null;
           created_at?: string;
+          scan_status?: ScanStatus;
         };
         Update: {
           id?: string;
@@ -145,6 +167,7 @@ export interface Database {
           ocr_status?: OcrStatus;
           ocr_result?: Json | null;
           created_at?: string;
+          scan_status?: ScanStatus;
         };
         Relationships: [
           {
@@ -169,6 +192,7 @@ export interface Database {
           description: string | null;
           order_index: number;
           created_at: string;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -177,6 +201,7 @@ export interface Database {
           description?: string | null;
           order_index?: number;
           created_at?: string;
+          deleted_at?: string | null;
         };
         Update: {
           id?: string;
@@ -185,6 +210,7 @@ export interface Database {
           description?: string | null;
           order_index?: number;
           created_at?: string;
+          deleted_at?: string | null;
         };
         Relationships: [];
       };
@@ -196,6 +222,7 @@ export interface Database {
           cohort_label: string | null;
           status: EnrollmentStatus;
           enrolled_at: string;
+          starts_on: string | null;
         };
         Insert: {
           id?: string;
@@ -204,6 +231,7 @@ export interface Database {
           cohort_label?: string | null;
           status?: EnrollmentStatus;
           enrolled_at?: string;
+          starts_on?: string | null;
         };
         Update: {
           id?: string;
@@ -212,6 +240,7 @@ export interface Database {
           cohort_label?: string | null;
           status?: EnrollmentStatus;
           enrolled_at?: string;
+          starts_on?: string | null;
         };
         Relationships: [
           {
@@ -232,6 +261,12 @@ export interface Database {
           max_score: number;
           order_index: number;
           created_at: string;
+          release_offset_days: number | null;
+          due_offset_days: number | null;
+          deleted_at: string | null;
+          brief_storage_path: string | null;
+          late_penalty_pct_per_day: number | null;
+          late_grace_days: number | null;
         };
         Insert: {
           id?: string;
@@ -242,6 +277,12 @@ export interface Database {
           max_score?: number;
           order_index?: number;
           created_at?: string;
+          release_offset_days?: number | null;
+          due_offset_days?: number | null;
+          deleted_at?: string | null;
+          brief_storage_path?: string | null;
+          late_penalty_pct_per_day?: number | null;
+          late_grace_days?: number | null;
         };
         Update: {
           id?: string;
@@ -252,6 +293,12 @@ export interface Database {
           max_score?: number;
           order_index?: number;
           created_at?: string;
+          release_offset_days?: number | null;
+          due_offset_days?: number | null;
+          deleted_at?: string | null;
+          brief_storage_path?: string | null;
+          late_penalty_pct_per_day?: number | null;
+          late_grace_days?: number | null;
         };
         Relationships: [
           {
@@ -276,6 +323,7 @@ export interface Database {
           graded_at: string | null;
           created_at: string;
           updated_at: string;
+          scan_status: ScanStatus;
         };
         Insert: {
           id?: string;
@@ -290,6 +338,7 @@ export interface Database {
           graded_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          scan_status?: ScanStatus;
         };
         Update: {
           id?: string;
@@ -304,6 +353,7 @@ export interface Database {
           graded_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          scan_status?: ScanStatus;
         };
         Relationships: [
           {
@@ -319,6 +369,310 @@ export interface Database {
             referencedColumns: ["id"];
           }
         ];
+      };
+      rubric_criteria: {
+        Row: {
+          id: string;
+          assignment_id: string;
+          label: string;
+          description: string | null;
+          max_points: number;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          assignment_id: string;
+          label: string;
+          description?: string | null;
+          max_points: number;
+          order_index?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          assignment_id?: string;
+          label?: string;
+          description?: string | null;
+          max_points?: number;
+          order_index?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rubric_criteria_assignment_id_fkey";
+            columns: ["assignment_id"];
+            referencedRelation: "assignments";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      submission_criterion_scores: {
+        Row: {
+          id: string;
+          submission_id: string;
+          criterion_id: string;
+          points: number;
+          comment: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          criterion_id: string;
+          points: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          submission_id?: string;
+          criterion_id?: string;
+          points?: number;
+          comment?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "submission_criterion_scores_submission_id_fkey";
+            columns: ["submission_id"];
+            referencedRelation: "submissions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "submission_criterion_scores_criterion_id_fkey";
+            columns: ["criterion_id"];
+            referencedRelation: "rubric_criteria";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      assignment_prerequisites: {
+        Row: {
+          assignment_id: string;
+          prerequisite_id: string;
+          created_at: string;
+        };
+        Insert: {
+          assignment_id: string;
+          prerequisite_id: string;
+          created_at?: string;
+        };
+        Update: {
+          assignment_id?: string;
+          prerequisite_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      data_deletion_requests: {
+        Row: {
+          id: string;
+          user_id: string;
+          user_email: string;
+          reason: string | null;
+          status: DeletionRequestStatus;
+          requested_at: string;
+          processed_at: string | null;
+          processed_by: string | null;
+          processed_notes: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          user_email: string;
+          reason?: string | null;
+          status?: DeletionRequestStatus;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          processed_notes?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          user_email?: string;
+          reason?: string | null;
+          status?: DeletionRequestStatus;
+          requested_at?: string;
+          processed_at?: string | null;
+          processed_by?: string | null;
+          processed_notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "data_deletion_requests_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      audit_log: {
+        Row: {
+          id: string;
+          created_at: string;
+          actor_id: string | null;
+          actor_email: string | null;
+          actor_role: string | null;
+          action: string;
+          entity_type: string | null;
+          entity_id: string | null;
+          details: Json | null;
+          ip: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          actor_id?: string | null;
+          actor_email?: string | null;
+          actor_role?: string | null;
+          action: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          details?: Json | null;
+          ip?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          actor_id?: string | null;
+          actor_email?: string | null;
+          actor_role?: string | null;
+          action?: string;
+          entity_type?: string | null;
+          entity_id?: string | null;
+          details?: Json | null;
+          ip?: string | null;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: string;
+          title: string;
+          body: string | null;
+          link: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind: string;
+          title: string;
+          body?: string | null;
+          link?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          kind?: string;
+          title?: string;
+          body?: string | null;
+          link?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          scope_type: "admissions" | "tutor";
+          scope_id: string | null;
+          title: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          scope_type: "admissions" | "tutor";
+          scope_id?: string | null;
+          title?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          scope_type?: "admissions" | "tutor";
+          scope_id?: string | null;
+          title?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          role: "user" | "assistant";
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          role: "user" | "assistant";
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          role?: "user" | "assistant";
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            referencedRelation: "ai_conversations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      email_deliveries: {
+        Row: {
+          id: string;
+          resend_id: string | null;
+          recipient: string | null;
+          subject: string | null;
+          event: string;
+          payload: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          resend_id?: string | null;
+          recipient?: string | null;
+          subject?: string | null;
+          event: string;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          resend_id?: string | null;
+          recipient?: string | null;
+          subject?: string | null;
+          event?: string;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: { [_ in never]: never };
@@ -361,6 +715,9 @@ export type Module = Database["public"]["Tables"]["modules"]["Row"];
 export type Enrollment = Database["public"]["Tables"]["enrollments"]["Row"];
 export type Assignment = Database["public"]["Tables"]["assignments"]["Row"];
 export type Submission = Database["public"]["Tables"]["submissions"]["Row"];
+export type RubricCriterion = Database["public"]["Tables"]["rubric_criteria"]["Row"];
+export type SubmissionCriterionScore =
+  Database["public"]["Tables"]["submission_criterion_scores"]["Row"];
 
 export type CohortProgress = {
   cohort_size: number;

@@ -9,7 +9,7 @@ import {
   AssignmentRow,
 } from "@/components/CurriculumEditor";
 import { courses } from "@/data/courses";
-import type { Assignment, Module } from "@/lib/database.types";
+import type { Assignment, Module, RubricCriterion } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +33,7 @@ export default async function CurriculumDetail({ params }: Params) {
     .from("modules")
     .select("id, course_slug, title, description, order_index, created_at")
     .eq("course_slug", params.slug)
+    .is("deleted_at", null)
     .order("order_index", { ascending: true })
     .returns<Module[]>();
   const modules = modulesData ?? [];
@@ -41,17 +42,53 @@ export default async function CurriculumDetail({ params }: Params) {
   const { data: assignmentsData } = moduleIds.length
     ? await supabase
         .from("assignments")
-        .select("id, module_id, title, description, due_at, max_score, order_index, created_at")
+        .select("id, module_id, title, description, due_at, max_score, order_index, created_at, release_offset_days, due_offset_days, brief_storage_path, late_penalty_pct_per_day, late_grace_days")
         .in("module_id", moduleIds)
+        .is("deleted_at", null)
         .order("order_index", { ascending: true })
         .returns<Assignment[]>()
     : { data: [] as Assignment[] };
+  const allAssignments = assignmentsData ?? [];
   const assignmentsByModule = new Map<string, Assignment[]>();
-  for (const a of assignmentsData ?? []) {
+  for (const a of allAssignments) {
     const list = assignmentsByModule.get(a.module_id) ?? [];
     list.push(a);
     assignmentsByModule.set(a.module_id, list);
   }
+  const assignmentIds = allAssignments.map((a) => a.id);
+
+  // Rubric criteria + prerequisites for every assignment in this course.
+  const { data: criteriaData } = assignmentIds.length
+    ? await supabase
+        .from("rubric_criteria")
+        .select("id, assignment_id, label, description, max_points, order_index, created_at")
+        .in("assignment_id", assignmentIds)
+        .order("order_index", { ascending: true })
+        .returns<RubricCriterion[]>()
+    : { data: [] as RubricCriterion[] };
+  const criteriaByAssignment = new Map<string, RubricCriterion[]>();
+  for (const c of criteriaData ?? []) {
+    const list = criteriaByAssignment.get(c.assignment_id) ?? [];
+    list.push(c);
+    criteriaByAssignment.set(c.assignment_id, list);
+  }
+
+  const { data: prereqData } = assignmentIds.length
+    ? await supabase
+        .from("assignment_prerequisites")
+        .select("assignment_id, prerequisite_id")
+        .in("assignment_id", assignmentIds)
+        .returns<{ assignment_id: string; prerequisite_id: string }[]>()
+    : { data: [] as { assignment_id: string; prerequisite_id: string }[] };
+  const prereqsByAssignment = new Map<string, string[]>();
+  for (const p of prereqData ?? []) {
+    const list = prereqsByAssignment.get(p.assignment_id) ?? [];
+    list.push(p.prerequisite_id);
+    prereqsByAssignment.set(p.assignment_id, list);
+  }
+
+  // Sibling assignments (same course) usable as prerequisites.
+  const siblings = allAssignments.map((a) => ({ id: a.id, title: a.title }));
 
   const nextModuleOrder = modules.length
     ? Math.max(...modules.map((m) => m.order_index)) + 1
@@ -95,7 +132,13 @@ export default async function CurriculumDetail({ params }: Params) {
                     ) : (
                       <ul className="mt-2 space-y-2">
                         {list.map((a) => (
-                          <AssignmentRow key={a.id} assignment={a} />
+                          <AssignmentRow
+                            key={a.id}
+                            assignment={a}
+                            criteria={criteriaByAssignment.get(a.id) ?? []}
+                            prerequisiteIds={prereqsByAssignment.get(a.id) ?? []}
+                            siblings={siblings.filter((s) => s.id !== a.id)}
+                          />
                         ))}
                       </ul>
                     )}

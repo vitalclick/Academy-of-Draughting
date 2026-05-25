@@ -6,6 +6,7 @@ import { env } from "@/lib/env";
 import { isAllowedOrigin } from "@/lib/origin";
 import { applyLimiter, ipFromRequest } from "@/lib/ratelimit";
 import { applicationReceivedEmail, sendEmail } from "@/lib/email";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,7 @@ const ApplicationSchema = z.object({
   studyMode: z.enum(["full-time", "evening", "online"]),
   prevQualification: z.string().max(200).optional(),
   notes: z.string().max(2000).optional(),
+  turnstileToken: z.string().max(2048).optional(),
 });
 
 export type ApplicationInput = z.infer<typeof ApplicationSchema>;
@@ -43,6 +45,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Validation failed.", issues }, { status: 400 });
   }
 
+  const captcha = await verifyTurnstile(input.turnstileToken, ip);
+  if (!captcha.ok) {
+    return NextResponse.json(
+      { error: "Anti-bot check failed. Please retry." },
+      { status: 400 }
+    );
+  }
+
   // Optional: associate the submission with the signed-in user.
   let userId: string | null = null;
   try {
@@ -67,15 +77,19 @@ export async function POST(req: Request) {
         status: "received",
         user_id: userId,
       })
-      .select("id")
+      .select("id, upload_token, upload_token_expires_at")
       .single();
 
     if (error) throw error;
 
-    // Fire-and-await notifications. Failures don't block the response.
     await notify(input, data.id).catch(() => undefined);
 
-    return NextResponse.json({ id: data.id, status: "received" });
+    return NextResponse.json({
+      id: data.id,
+      status: "received",
+      uploadToken: data.upload_token,
+      uploadTokenExpiresAt: data.upload_token_expires_at,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });

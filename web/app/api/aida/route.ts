@@ -13,6 +13,8 @@ import { aidaLimiter, ipFromRequest } from "@/lib/ratelimit";
 import { getSessionUser } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { courses } from "@/data/courses";
+import { moderateAidaMessages } from "@/lib/aida-moderation";
+import { log } from "@/lib/log";
 
 export const runtime = "nodejs";
 
@@ -24,6 +26,7 @@ const MessageSchema = z.object({
 const BodySchema = z.object({
   messages: z.array(MessageSchema).min(1).max(40),
   assignmentId: z.string().uuid().optional(),
+  conversationId: z.string().uuid().optional(),
 });
 
 type AssignmentContext = {
@@ -46,6 +49,7 @@ async function loadAssignmentContext(
       "id, title, description, max_score, module_id, modules!inner(title, description, course_slug)"
     )
     .eq("id", assignmentId)
+    .is("deleted_at", null)
     .maybeSingle<{
       id: string;
       title: string;
@@ -111,6 +115,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
+  const mod = moderateAidaMessages(body.messages);
+  if (!mod.ok) {
+    log.warn("aida.moderation_block", { reason: mod.reason, detail: mod.detail });
+    if (mod.reason === "suspicious") {
+      return NextResponse.json(
+        {
+          error:
+            "I can't help with that. If you have a real question about the assignment or your application, ask it directly.",
+        },
+        { status: 400 }
+      );
+    }
+    if (mod.reason === "too_long") {
+      return NextResponse.json({ error: "Message too long." }, { status: 413 });
+    }
+    return NextResponse.json({ error: "Message cannot be empty." }, { status: 400 });
+  }
+
   let system = AIDA_SYSTEM_PROMPT;
   let maxTokens = 512;
   let limitKey = ipFromRequest(req);
@@ -151,8 +173,41 @@ export async function POST(req: Request) {
       .join("\n")
       .trim();
 
-    return NextResponse.json({ reply: text });
+    // Persist conversation history when signed in. Fire-and-forget — never
+    // block the chat response on the audit write.
+    const user = await getSessionUser().catch(() => null);
+    let conversationId: string | null = body.conversationId ?? null;
+    if (user) {
+      try {
+        const admin = getSupabaseAdmin();
+        if (!conversationId) {
+          const { data: conv } = await admin
+            .from("ai_conversations")
+            .insert({
+              user_id: user.id,
+              scope_type: body.assignmentId ? "tutor" : "admissions",
+              scope_id: body.assignmentId ?? null,
+              title: body.messages[0]?.content.slice(0, 80) ?? null,
+            })
+            .select("id")
+            .single();
+          conversationId = conv?.id ?? null;
+        }
+        if (conversationId) {
+          const lastUser = [...body.messages].reverse().find((m) => m.role === "user");
+          const rows: { conversation_id: string; role: "user" | "assistant"; content: string }[] = [];
+          if (lastUser) rows.push({ conversation_id: conversationId, role: "user", content: lastUser.content });
+          if (text) rows.push({ conversation_id: conversationId, role: "assistant", content: text });
+          if (rows.length) await admin.from("ai_messages").insert(rows);
+        }
+      } catch (err) {
+        log.warn("aida.history_write_failed", { err: String(err) });
+      }
+    }
+
+    return NextResponse.json({ reply: text, conversationId });
   } catch (err) {
+    log.error("aida.upstream_failed", { err: err instanceof Error ? err.message : String(err) });
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 502 });
   }

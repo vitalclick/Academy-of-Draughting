@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getSupabaseBrowser } from "@/lib/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -11,21 +12,56 @@ export function AssignmentTutor({
   assignmentId: string;
   assignmentTitle: string;
 }) {
+  const greeting: Msg = {
+    role: "assistant",
+    content: `Hi — I'm AIDA, your tutor for "${assignmentTitle}". Tell me where you're stuck and I'll walk you through it.`,
+  };
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      content: `Hi — I'm AIDA, your tutor for "${assignmentTitle}". Tell me where you're stuck and I'll walk you through it.`,
-    },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([greeting]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, open]);
+
+  // Load the most recent prior tutor conversation for this assignment when
+  // the panel is first opened. RLS scopes this to the signed-in user.
+  useEffect(() => {
+    if (!open || historyLoaded) return;
+    setHistoryLoaded(true);
+    (async () => {
+      try {
+        const supabase = getSupabaseBrowser();
+        const { data: conv } = await supabase
+          .from("ai_conversations")
+          .select("id")
+          .eq("scope_type", "tutor")
+          .eq("scope_id", assignmentId)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle<{ id: string }>();
+        if (!conv) return;
+        const { data: msgs } = await supabase
+          .from("ai_messages")
+          .select("role, content, created_at")
+          .eq("conversation_id", conv.id)
+          .order("created_at", { ascending: true })
+          .returns<{ role: "user" | "assistant"; content: string }[]>();
+        if (msgs && msgs.length) {
+          setConversationId(conv.id);
+          setMessages([greeting, ...msgs.map((m) => ({ role: m.role, content: m.content }))]);
+        }
+      } catch {
+        // No history / not signed in — keep the greeting.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   async function send() {
     const text = input.trim();
@@ -42,10 +78,12 @@ export function AssignmentTutor({
         body: JSON.stringify({
           messages: next.filter((m) => m.role !== "assistant" || m !== messages[0]),
           assignmentId,
+          conversationId: conversationId ?? undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Request failed");
+      if (data.conversationId) setConversationId(data.conversationId);
       setMessages((m) => [...m, { role: "assistant", content: data.reply }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

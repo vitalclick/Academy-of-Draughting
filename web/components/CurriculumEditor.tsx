@@ -8,8 +8,12 @@ import {
   createAssignment,
   updateAssignment,
   deleteAssignment,
+  createCriterion,
+  deleteCriterion,
+  setPrerequisites,
 } from "@/app/admin/actions";
-import type { Assignment, Module } from "@/lib/database.types";
+import { BriefUploader } from "@/components/BriefUploader";
+import type { Assignment, Module, RubricCriterion } from "@/lib/database.types";
 
 // -- Module editor -----------------------------------------------------------
 
@@ -231,6 +235,8 @@ export function AssignmentAdder({
   const [dueAt, setDueAt] = useState("");
   const [maxScore, setMaxScore] = useState("100");
   const [order, setOrder] = useState(String(nextOrder));
+  const [releaseOffset, setReleaseOffset] = useState("");
+  const [dueOffset, setDueOffset] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -245,12 +251,16 @@ export function AssignmentAdder({
           dueAt: fromLocal(dueAt) || undefined,
           maxScore: Number(maxScore),
           orderIndex: Number(order),
+          releaseOffsetDays: releaseOffset === "" ? null : Number(releaseOffset),
+          dueOffsetDays: dueOffset === "" ? null : Number(dueOffset),
         });
         setTitle("");
         setDescription("");
         setDueAt("");
         setMaxScore("100");
         setOrder(String(Number(order) + 1));
+        setReleaseOffset("");
+        setDueOffset("");
         setOpen(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed");
@@ -298,8 +308,31 @@ export function AssignmentAdder({
         type="datetime-local"
         value={dueAt}
         onChange={(e) => setDueAt(e.target.value)}
+        placeholder="Absolute due date (optional, overrides per-cohort offset)"
         className="mt-2 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
       />
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <label className="text-[11px] text-ink-3">
+          Release offset (days after cohort start)
+          <input
+            type="number"
+            value={releaseOffset}
+            onChange={(e) => setReleaseOffset(e.target.value)}
+            placeholder="leave blank for day 0"
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+        <label className="text-[11px] text-ink-3">
+          Due offset (days after cohort start)
+          <input
+            type="number"
+            value={dueOffset}
+            onChange={(e) => setDueOffset(e.target.value)}
+            placeholder="leave blank for none"
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+      </div>
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
@@ -324,13 +357,196 @@ export function AssignmentAdder({
   );
 }
 
-export function AssignmentRow({ assignment }: { assignment: Assignment }) {
+function RubricEditor({
+  assignmentId,
+  criteria,
+}: {
+  assignmentId: string;
+  criteria: RubricCriterion[];
+}) {
+  const [label, setLabel] = useState("");
+  const [points, setPoints] = useState("10");
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const total = criteria.reduce((s, c) => s + c.max_points, 0);
+
+  function add() {
+    if (!label.trim()) return;
+    setError(null);
+    startTransition(async () => {
+      try {
+        await createCriterion({
+          assignmentId,
+          label,
+          maxPoints: Number(points),
+          orderIndex: criteria.length + 1,
+        });
+        setLabel("");
+        setPoints("10");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed");
+      }
+    });
+  }
+
+  function remove(id: string) {
+    startTransition(async () => {
+      try {
+        await deleteCriterion(id, assignmentId);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed");
+      }
+    });
+  }
+
+  return (
+    <div className="mt-2 rounded border border-paper-3 bg-white p-2 text-[12px]">
+      <div className="mono text-[10px] uppercase text-ink-4">
+        Rubric {criteria.length > 0 && `· total ${total} pts`}
+      </div>
+      {criteria.length > 0 && (
+        <ul className="mt-1 space-y-1">
+          {criteria.map((c) => (
+            <li key={c.id} className="flex items-center justify-between">
+              <span>
+                {c.label} <span className="text-ink-4">/ {c.max_points}</span>
+              </span>
+              <button
+                onClick={() => remove(c.id)}
+                disabled={pending}
+                className="text-[11px] text-red-600 hover:text-red-500"
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-2 flex gap-2">
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="Criterion (e.g. Line work)"
+          className="flex-1 rounded border border-paper-3 px-2 py-1"
+        />
+        <input
+          type="number"
+          value={points}
+          onChange={(e) => setPoints(e.target.value)}
+          className="w-16 rounded border border-paper-3 px-2 py-1"
+        />
+        <button
+          onClick={add}
+          disabled={pending || !label.trim()}
+          className="rounded bg-electric-600 px-2 py-1 text-white hover:bg-electric-500 disabled:opacity-50"
+        >
+          Add
+        </button>
+      </div>
+      {criteria.length === 0 && (
+        <p className="mt-1 text-[10px] text-ink-4">
+          No criteria — this assignment uses a single 0–{"{max}"} score.
+        </p>
+      )}
+      {error && <p className="mt-1 text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function PrereqEditor({
+  assignmentId,
+  prerequisiteIds,
+  siblings,
+}: {
+  assignmentId: string;
+  prerequisiteIds: string[];
+  siblings: { id: string; title: string }[];
+}) {
+  const [selected, setSelected] = useState<string[]>(prerequisiteIds);
+  const [pending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function toggle(id: string) {
+    setSaved(false);
+    setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  }
+
+  function save() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await setPrerequisites(assignmentId, selected);
+        setSaved(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed");
+      }
+    });
+  }
+
+  if (siblings.length === 0) return null;
+
+  return (
+    <div className="mt-2 rounded border border-paper-3 bg-white p-2 text-[12px]">
+      <div className="mono text-[10px] uppercase text-ink-4">Prerequisites</div>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {siblings.map((s) => {
+          const on = selected.includes(s.id);
+          return (
+            <button
+              key={s.id}
+              onClick={() => toggle(s.id)}
+              className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                on
+                  ? "border-electric-400 bg-electric-50 text-electric-700"
+                  : "border-paper-3 text-ink-3 hover:border-electric-300"
+              }`}
+            >
+              {on ? "✓ " : ""}
+              {s.title}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          onClick={save}
+          disabled={pending}
+          className="rounded bg-electric-600 px-2 py-1 text-white hover:bg-electric-500 disabled:opacity-50"
+        >
+          {pending ? "Saving…" : "Save prerequisites"}
+        </button>
+        {saved && <span className="text-electric-700">Saved.</span>}
+        {error && <span className="text-red-600">{error}</span>}
+      </div>
+    </div>
+  );
+}
+
+export function AssignmentRow({
+  assignment,
+  criteria = [],
+  prerequisiteIds = [],
+  siblings = [],
+}: {
+  assignment: Assignment;
+  criteria?: RubricCriterion[];
+  prerequisiteIds?: string[];
+  siblings?: { id: string; title: string }[];
+}) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(assignment.title);
   const [description, setDescription] = useState(assignment.description ?? "");
   const [dueAt, setDueAt] = useState(isoLocal(assignment.due_at));
   const [maxScore, setMaxScore] = useState(String(assignment.max_score));
   const [order, setOrder] = useState(String(assignment.order_index));
+  const [releaseOffset, setReleaseOffset] = useState(
+    assignment.release_offset_days == null ? "" : String(assignment.release_offset_days)
+  );
+  const [dueOffset, setDueOffset] = useState(
+    assignment.due_offset_days == null ? "" : String(assignment.due_offset_days)
+  );
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -344,6 +560,8 @@ export function AssignmentRow({ assignment }: { assignment: Assignment }) {
           dueAt: fromLocal(dueAt),
           maxScore: Number(maxScore),
           orderIndex: Number(order),
+          releaseOffsetDays: releaseOffset === "" ? null : Number(releaseOffset),
+          dueOffsetDays: dueOffset === "" ? null : Number(dueOffset),
         });
         setEditing(false);
       } catch (err) {
@@ -366,27 +584,40 @@ export function AssignmentRow({ assignment }: { assignment: Assignment }) {
 
   if (!editing) {
     return (
-      <li className="flex items-baseline justify-between gap-3 rounded border border-paper-3 bg-white px-3 py-2">
-        <div className="min-w-0">
-          <div className="text-sm text-ink-1">
-            <span className="mono text-[10px] text-ink-4">#{assignment.order_index}</span>{" "}
-            {assignment.title}
+      <li className="rounded border border-paper-3 bg-white px-3 py-2">
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-sm text-ink-1">
+              <span className="mono text-[10px] text-ink-4">#{assignment.order_index}</span>{" "}
+              {assignment.title}
+            </div>
+            <div className="mono text-[11px] text-ink-4">
+              max {assignment.max_score}
+              {assignment.due_at && (
+                <> · due {new Date(assignment.due_at).toLocaleDateString()}</>
+              )}
+              {assignment.late_penalty_pct_per_day != null &&
+                assignment.late_penalty_pct_per_day > 0 && (
+                  <> · {assignment.late_penalty_pct_per_day}%/d late</>
+                )}
+            </div>
           </div>
-          <div className="mono text-[11px] text-ink-4">
-            max {assignment.max_score}
-            {assignment.due_at && (
-              <> · due {new Date(assignment.due_at).toLocaleDateString()}</>
-            )}
+          <div className="flex gap-2 text-[11px]">
+            <button onClick={() => setEditing(true)} className="text-ink-3 hover:text-ink-1">
+              Edit
+            </button>
+            <button onClick={remove} disabled={pending} className="text-red-600 hover:text-red-500">
+              Delete
+            </button>
           </div>
         </div>
-        <div className="flex gap-2 text-[11px]">
-          <button onClick={() => setEditing(true)} className="text-ink-3 hover:text-ink-1">
-            Edit
-          </button>
-          <button onClick={remove} disabled={pending} className="text-red-600 hover:text-red-500">
-            Delete
-          </button>
-        </div>
+        <BriefUploader assignmentId={assignment.id} currentPath={assignment.brief_storage_path} />
+        <RubricEditor assignmentId={assignment.id} criteria={criteria} />
+        <PrereqEditor
+          assignmentId={assignment.id}
+          prerequisiteIds={prerequisiteIds}
+          siblings={siblings}
+        />
       </li>
     );
   }
@@ -418,6 +649,26 @@ export function AssignmentRow({ assignment }: { assignment: Assignment }) {
         onChange={(e) => setDueAt(e.target.value)}
         className="mt-2 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
       />
+      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <label className="text-[11px] text-ink-3">
+          Release offset (days)
+          <input
+            type="number"
+            value={releaseOffset}
+            onChange={(e) => setReleaseOffset(e.target.value)}
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+        <label className="text-[11px] text-ink-3">
+          Due offset (days)
+          <input
+            type="number"
+            value={dueOffset}
+            onChange={(e) => setDueOffset(e.target.value)}
+            className="mt-1 w-full rounded border border-paper-3 bg-white px-2 py-1.5"
+          />
+        </label>
+      </div>
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}

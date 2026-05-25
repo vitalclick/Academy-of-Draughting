@@ -38,6 +38,11 @@ export function DocumentUpload({ applicationId }: { applicationId: string; userI
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId: signData.documentId }),
       });
+      void fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "application_document", id: signData.documentId }),
+      });
       setLastFile(file.name);
       setStatus("done");
     } catch (err) {

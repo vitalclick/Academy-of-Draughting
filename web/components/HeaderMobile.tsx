@@ -8,11 +8,13 @@ type Item = { href: string; label: string };
 export function HeaderMobile({
   nav,
   isAdmin,
+  isFaculty,
   signedIn,
   email,
 }: {
   nav: Item[];
   isAdmin: boolean;
+  isFaculty?: boolean;
   signedIn: boolean;
   email: string | null;
 }) {
@@ -38,6 +40,11 @@ export function HeaderMobile({
             {isAdmin && (
               <Link href="/admin" className="rounded-sm px-2 py-2 text-sm font-medium text-electric-700 hover:bg-paper">
                 Admin
+              </Link>
+            )}
+            {isFaculty && (
+              <Link href="/admin/curriculum" className="rounded-sm px-2 py-2 text-sm font-medium text-electric-700 hover:bg-paper">
+                Curriculum
               </Link>
             )}
             {signedIn ? (

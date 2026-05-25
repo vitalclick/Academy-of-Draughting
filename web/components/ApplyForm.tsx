@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { courses } from "@/data/courses";
+import { ApplyDocumentSlot } from "@/components/ApplyDocumentUpload";
+import { Turnstile } from "@/components/Turnstile";
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type FormValues = {
   fullName: string;
@@ -18,6 +22,8 @@ export function ApplyForm({ defaultCourse }: { defaultCourse?: string }) {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
+  const [uploadToken, setUploadToken] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const {
     register,
@@ -37,11 +43,12 @@ export function ApplyForm({ defaultCourse }: { defaultCourse?: string }) {
       const res = await fetch("/api/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Submission failed");
       setSubmittedId(data.id);
+      setUploadToken(data.uploadToken ?? null);
       setStatus("success");
     } catch (err) {
       setStatus("error");
@@ -49,16 +56,63 @@ export function ApplyForm({ defaultCourse }: { defaultCourse?: string }) {
     }
   }
 
-  if (status === "success") {
+  if (status === "success" && submittedId) {
     return (
-      <div className="rounded-xl border border-electric-200 bg-white p-8">
-        <span className="eyebrow">APPLICATION RECEIVED</span>
-        <h2 className="mt-3 text-2xl font-medium">Thanks — you're in.</h2>
-        <p className="mt-3 text-ink-3">
-          Your reference is{" "}
-          <span className="font-mono text-ink">{submittedId}</span>. Admissions
-          will be in touch within one working day on WhatsApp.
-        </p>
+      <div className="space-y-6">
+        <div className="rounded-xl border border-electric-200 bg-white p-8">
+          <span className="eyebrow">APPLICATION RECEIVED</span>
+          <h2 className="mt-3 text-2xl font-medium">Thanks — you're in.</h2>
+          <p className="mt-3 text-ink-3">
+            Your reference is{" "}
+            <span className="font-mono text-ink">{submittedId}</span>. Admissions
+            will be in touch within one working day on WhatsApp.
+          </p>
+        </div>
+
+        {uploadToken && (
+          <div className="rounded-xl border border-paper-3 bg-white p-8">
+            <span className="eyebrow">SPEED UP YOUR REVIEW</span>
+            <h3 className="mt-3 text-xl font-medium">Upload your documents now</h3>
+            <p className="mt-2 text-sm text-ink-3">
+              We need these to assess your application. Upload them in the next 24
+              hours and admissions can decide on the same day. Otherwise, you can
+              create an account later and upload from the student portal.
+            </p>
+            <div className="mt-5 grid gap-3">
+              <ApplyDocumentSlot
+                applicationId={submittedId}
+                uploadToken={uploadToken}
+                kind="id"
+                label="South African ID or passport"
+                required
+                hint="PDF or photo · clear and readable"
+              />
+              <ApplyDocumentSlot
+                applicationId={submittedId}
+                uploadToken={uploadToken}
+                kind="qualification"
+                label="Highest qualification certificate (matric or higher)"
+                required
+                hint="PDF preferred · we'll OCR it automatically"
+              />
+              <ApplyDocumentSlot
+                applicationId={submittedId}
+                uploadToken={uploadToken}
+                kind="portfolio"
+                label="Portfolio or sample drawings (optional)"
+                hint="If you have prior CAD work, attach a PDF or image"
+              />
+            </div>
+            <p className="mt-4 text-[11px] text-ink-4">
+              By uploading you confirm these documents are yours and may be processed
+              for admissions. See our{" "}
+              <a href="/privacy" className="text-electric-700 underline">
+                Privacy Policy
+              </a>
+              .
+            </p>
+          </div>
+        )}
       </div>
     );
   }
@@ -103,9 +157,22 @@ export function ApplyForm({ defaultCourse }: { defaultCourse?: string }) {
         </div>
       )}
 
+      {TURNSTILE_SITE_KEY && (
+        <div className="mt-6">
+          <Turnstile siteKey={TURNSTILE_SITE_KEY} onToken={setTurnstileToken} />
+        </div>
+      )}
+
       <div className="mt-6 flex items-center justify-between">
-        <p className="text-[12px] text-ink-4">By submitting, you agree to be contacted by admissions. POPIA-compliant.</p>
-        <button type="submit" disabled={status === "submitting"} className="btn-primary disabled:opacity-50">
+        <p className="text-[12px] text-ink-4">
+          By submitting, you agree to be contacted by admissions and to our{" "}
+          <a href="/privacy" className="text-electric-700 underline">Privacy Policy</a>.
+        </p>
+        <button
+          type="submit"
+          disabled={status === "submitting" || (Boolean(TURNSTILE_SITE_KEY) && !turnstileToken)}
+          className="btn-primary disabled:opacity-50"
+        >
           {status === "submitting" ? "Submitting…" : "Submit application →"}
         </button>
       </div>

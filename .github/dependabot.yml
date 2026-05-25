@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      next:
+        patterns: ["next", "eslint-config-next", "@next/*"]
+      react:
+        patterns: ["react", "react-dom", "@types/react*"]
+      supabase:
+        patterns: ["@supabase/*"]
+      types-and-tooling:
+        patterns:
+          - "@types/*"
+          - "typescript"
+          - "tsx"
+          - "@playwright/test"
+          - "autoprefixer"
+          - "postcss"
+          - "tailwindcss"
+          - "eslint"
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore(deps)
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: chore(ci)
+      include: scope

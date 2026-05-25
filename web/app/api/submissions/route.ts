@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     .from("assignments")
     .select("id, module_id, modules!inner(course_slug)")
     .eq("id", body.assignmentId)
+    .is("deleted_at", null)
     .maybeSingle<{ id: string; module_id: string; modules: { course_slug: string } }>();
   if (aErr) return NextResponse.json({ error: aErr.message }, { status: 500 });
   if (!assignment) {
@@ -89,6 +90,32 @@ export async function POST(req: Request) {
       { error: "You are not enrolled in this course." },
       { status: 403 }
     );
+  }
+
+  // Prerequisite gate: every prerequisite assignment must have a graded
+  // submission from this user before they can submit the dependent one.
+  const { data: prereqs } = await supabase
+    .from("assignment_prerequisites")
+    .select("prerequisite_id")
+    .eq("assignment_id", body.assignmentId)
+    .returns<{ prerequisite_id: string }[]>();
+  if (prereqs && prereqs.length) {
+    const prereqIds = prereqs.map((p) => p.prerequisite_id);
+    const { data: done } = await supabase
+      .from("submissions")
+      .select("assignment_id")
+      .eq("user_id", user.id)
+      .eq("status", "graded")
+      .in("assignment_id", prereqIds)
+      .returns<{ assignment_id: string }[]>();
+    const doneIds = new Set((done ?? []).map((d) => d.assignment_id));
+    const missing = prereqIds.filter((id) => !doneIds.has(id));
+    if (missing.length) {
+      return NextResponse.json(
+        { error: "Complete the prerequisite assignment(s) first." },
+        { status: 409 }
+      );
+    }
   }
 
   let storagePath: string | null = null;

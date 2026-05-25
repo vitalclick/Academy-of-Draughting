@@ -35,7 +35,13 @@ export function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="container-page flex flex-col gap-2 py-6 text-[12px] text-white/40 sm:flex-row sm:justify-between">
           <span className="mono">© {new Date().getFullYear()} ACADEMY OF ADVANCED DRAUGHTING · EST. 1981</span>
-          <span className="mono">POPIA · GDPR · ACCESSIBILITY · STATUS</span>
+          <span className="mono flex gap-3">
+            <a href="/privacy" className="hover:text-white">PRIVACY</a>
+            <span>·</span>
+            <a href="/terms" className="hover:text-white">TERMS</a>
+            <span>·</span>
+            <a href="/api/health" className="hover:text-white">STATUS</a>
+          </span>
         </div>
       </div>
     </footer>

@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { getUserWithRole } from "@/lib/supabase/server";
-import { hasSupabasePublic, env } from "@/lib/env";
-import { HeaderMobile } from "@/components/HeaderMobile";
+import { HeaderClient } from "@/components/HeaderClient";
 
 const NAV = [
   { href: "/about", label: "About" },
@@ -10,10 +8,10 @@ const NAV = [
   { href: "/apply", label: "Apply" },
 ];
 
-export async function SiteHeader() {
-  const user = hasSupabasePublic(env()) ? await safeGetUser() : null;
-  const isAdmin = user?.role === "admin";
-
+// Pure static shell. All session-dependent UI lives in <HeaderClient/> so this
+// component (and therefore the root layout) never reads cookies server-side —
+// keeping marketing pages statically generated.
+export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-paper-3 bg-white/85 backdrop-blur">
       <div className="border-b border-paper-2 bg-paper">
@@ -31,45 +29,8 @@ export async function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-7 md:flex">
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className="text-sm text-ink-2 hover:text-ink">
-              {n.label}
-            </Link>
-          ))}
-          {isAdmin && (
-            <Link href="/admin" className="text-sm font-medium text-electric-700 hover:text-electric-600">
-              Admin
-            </Link>
-          )}
-          {user ? (
-            <form action="/auth/signout" method="post" className="contents">
-              <span className="text-[12px] text-ink-3">{user.user.email}</span>
-              <button type="submit" className="btn-ghost">Sign out</button>
-            </form>
-          ) : (
-            <>
-              <Link href="/login" className="text-sm text-ink-2 hover:text-ink">Sign in</Link>
-              <Link href="/apply" className="btn-primary">Apply now</Link>
-            </>
-          )}
-        </nav>
-
-        <HeaderMobile
-          nav={NAV}
-          isAdmin={isAdmin}
-          signedIn={Boolean(user)}
-          email={user?.user.email ?? null}
-        />
+        <HeaderClient nav={NAV} />
       </div>
     </header>
   );
-}
-
-async function safeGetUser() {
-  try {
-    return await getUserWithRole();
-  } catch {
-    return null;
-  }
 }
