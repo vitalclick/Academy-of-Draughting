@@ -21,8 +21,6 @@ export default async function AdminAuthedLayout({ children }: { children: React.
   return (
     <div className="admin-shell">
       <AdminSidebar
-        email={admin.email}
-        role={admin.role}
         applicationsCount={counts.applications_submitted}
         studentsCount={counts.students_active}
       />
