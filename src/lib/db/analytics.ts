@@ -7,7 +7,6 @@ import {
   type SegmentKey,
   type SeriesPoint,
   type BarDatum,
-  type GeoDatum,
   type WebAnalytics,
 } from '@/lib/analytics/web';
 

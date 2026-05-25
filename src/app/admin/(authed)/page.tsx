@@ -5,7 +5,6 @@ import { Activity, IntakeRow, Kpi } from './_components/viz';
 import { AnalyticsFilters } from './_components/analytics-filters';
 import {
   MetricCard,
-  TrafficChart,
   BarList,
   GeoList,
   DeviceDonut,
@@ -13,6 +12,7 @@ import {
   fmtDuration,
   fmtPct,
 } from './_components/analytics';
+import { TrafficChart } from './_components/analytics-chart';
 
 export const dynamic = 'force-dynamic';
 

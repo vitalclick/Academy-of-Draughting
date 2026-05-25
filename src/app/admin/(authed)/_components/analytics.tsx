@@ -1,4 +1,4 @@
-import type { BarDatum, GeoDatum, SeriesPoint } from '@/lib/analytics/web';
+import type { BarDatum, GeoDatum } from '@/lib/analytics/web';
 
 export function fmtNum(n: number): string {
   return n.toLocaleString('en-ZA');
@@ -57,47 +57,6 @@ export function MetricCard({
           <MiniSpark values={spark} />
         </div>
       )}
-    </div>
-  );
-}
-
-export function TrafficChart({ series }: { series: SeriesPoint[] }) {
-  const W = 760;
-  const H = 200;
-  const pad = { t: 12, r: 8, b: 22, l: 8 };
-  const max = Math.max(...series.map((p) => p.pageViews), 1);
-  const n = series.length;
-  const x = (i: number) => pad.l + (i / Math.max(1, n - 1)) * (W - pad.l - pad.r);
-  const y = (v: number) => pad.t + (1 - v / max) * (H - pad.t - pad.b);
-
-  const line = (key: 'pageViews' | 'visitors') =>
-    series.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(p[key]).toFixed(1)}`).join(' ');
-
-  const pvPath = line('pageViews');
-  const area = `${pvPath} L ${x(n - 1).toFixed(1)} ${H - pad.b} L ${x(0).toFixed(1)} ${H - pad.b} Z`;
-
-  // a handful of x-axis labels
-  const ticks = n <= 8 ? series.map((_, i) => i) : [0, Math.floor(n / 4), Math.floor(n / 2), Math.floor((3 * n) / 4), n - 1];
-
-  return (
-    <div className="an-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="Traffic over time">
-        {[0.25, 0.5, 0.75].map((g) => (
-          <line key={g} x1={pad.l} x2={W - pad.r} y1={pad.t + g * (H - pad.t - pad.b)} y2={pad.t + g * (H - pad.t - pad.b)} className="an-grid" />
-        ))}
-        <path d={area} className="an-area" />
-        <path d={pvPath} className="an-line pv" />
-        <path d={line('visitors')} className="an-line vis" />
-      </svg>
-      <div className="an-xaxis">
-        {ticks.map((i) => (
-          <span key={i} style={{ left: `${(i / Math.max(1, n - 1)) * 100}%` }}>{series[i]?.label}</span>
-        ))}
-      </div>
-      <div className="an-legend">
-        <span><i className="dot pv" /> Page views</span>
-        <span><i className="dot vis" /> Visitors</span>
-      </div>
     </div>
   );
 }
