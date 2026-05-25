@@ -5,6 +5,7 @@ export const SITE = {
   url: 'https://academydraughting.com',
   email: 'enroll@academydraughting.com',
   phone: '+27 68 110 0746',
+  whatsappNumber: '27681100746',
   whatsappJhb: 'https://wa.me/27681100746',
   whatsappDbn: 'https://wa.me/27681100746',
   description:

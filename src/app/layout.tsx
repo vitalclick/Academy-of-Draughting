@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { AidaProvider } from '@/components/chrome/aida-context';
 import { AidaWidget } from '@/components/chrome/aida-widget';
+import { WhatsAppFab } from '@/components/chrome/whatsapp-fab';
 import { CookieBanner } from '@/components/chrome/cookie-banner';
 import { Analytics } from '@/components/chrome/analytics';
 import { PersonalizationProvider } from '@/components/personalization/provider';
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AidaProvider>
             {children}
             <AidaWidget />
+            <WhatsAppFab />
             <CookieBanner />
             <ExitIntent />
             <Analytics

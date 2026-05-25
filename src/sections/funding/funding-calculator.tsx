@@ -11,6 +11,7 @@ import {
   type FundingRouteId,
 } from '@/data/funding';
 import { track } from '@/lib/analytics/events';
+import { waLink } from '@/lib/whatsapp/link';
 
 function getAnonIds() {
   if (typeof window === 'undefined') return { anonymousId: null, sessionId: null };
@@ -265,6 +266,20 @@ export function FundingCalculator() {
                     <div className="aside-row"><span>Deposit to secure seat</span><span style={{ fontWeight: 500 }}>{formatRand(quote.deposit)}</span></div>
                   )}
                 </div>
+              )}
+              {quote && (
+                <a
+                  href={waLink(
+                    `Hi, I'd like to discuss funding for ${quote.courseTitle} (${quote.route}). My estimate came to ${formatRand(quote.payable)}.`
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="t-mono-xs"
+                  style={{ display: 'inline-block', marginTop: 12, color: 'var(--blue-500)' }}
+                  onClick={() => track('whatsapp_click', { context: 'funding_quote' })}
+                >
+                  Prefer to chat? WhatsApp admissions about this →
+                </a>
               )}
             </div>
 
