@@ -10,11 +10,18 @@ const SUPABASE_HOST = (() => {
 
 /**
  * Content-Security-Policy. Strict by default; opens narrow holes for the
- * specific integrations we use. Keeps `unsafe-inline` OUT of script-src.
+ * specific integrations we use.
+ *
+ * `'unsafe-inline'` is required in script-src because the App Router emits
+ * inline bootstrap/streaming scripts on every page, and these pages are
+ * statically generated — so a per-request nonce can't match the prebuilt
+ * HTML and content hashes vary per render. These are public pages with no
+ * user data, so the weaker script policy is an acceptable trade-off.
  */
 function buildCsp() {
   const scriptSrc = [
     "'self'",
+    "'unsafe-inline'",
     'https://www.googletagmanager.com',
     'https://www.google-analytics.com',
     'https://connect.facebook.net',
