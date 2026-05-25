@@ -133,6 +133,26 @@ export type AdminRow = {
   created_at: string;
 };
 
+export type SignatureRow = {
+  id: string;
+  full_name: string;
+  role: string;
+  qualifications: string | null;
+  email: string;
+  mobile: string | null;
+  office_phone: string | null;
+  office_location: string;
+  linkedin: string | null;
+  website: string;
+  template: string;
+  show_logo: boolean;
+  show_tagline: boolean;
+  show_accreditations: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type EventRow = {
   id: number;
   occurred_at: string;
@@ -223,6 +243,16 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Omit<SubmissionRow, 'id'>>;
+        Relationships: [];
+      };
+      signatures: {
+        Row: SignatureRow;
+        Insert: Omit<SignatureRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<SignatureRow, 'id'>>;
         Relationships: [];
       };
     };

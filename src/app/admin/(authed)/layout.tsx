@@ -15,6 +15,7 @@ const NAV = [
   { href: '/admin/leads', label: 'Leads' },
   { href: '/admin/events', label: 'Events' },
   { href: '/admin/content', label: 'Content Studio' },
+  { href: '/admin/signatures', label: 'Email signatures' },
 ];
 
 export default async function AdminAuthedLayout({ children }: { children: React.ReactNode }) {
