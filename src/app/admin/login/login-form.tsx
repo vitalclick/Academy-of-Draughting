@@ -34,7 +34,8 @@ export function LoginForm() {
     return (
       <div>
         <div className="apply-banner apply-banner-success">
-          ✓ Check your inbox — the sign-in link expires in 10 minutes.
+          ✓ Check your inbox — if your email is authorized for admin access, a sign-in link is on
+          its way. It expires in 10 minutes.
         </div>
       </div>
     );
