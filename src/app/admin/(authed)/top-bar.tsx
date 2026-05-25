@@ -11,8 +11,6 @@ const TITLES: { match: (p: string) => boolean; title: string }[] = [
   { match: (p) => p.startsWith('/admin/students'), title: 'Students' },
   { match: (p) => p.startsWith('/admin/communications'), title: 'Communications' },
   { match: (p) => p.startsWith('/admin/programmes'), title: 'Programmes' },
-  { match: (p) => p.startsWith('/admin/schedule'), title: 'Schedule' },
-  { match: (p) => p.startsWith('/admin/faculty'), title: 'Faculty' },
   { match: (p) => p.startsWith('/admin/content'), title: 'Content Studio' },
   { match: (p) => p.startsWith('/admin/signatures'), title: 'Email signatures' },
   { match: (p) => p.startsWith('/admin/events'), title: 'Events' },
