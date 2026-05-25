@@ -33,7 +33,7 @@
 }
 
 .ph-inner {
-  padding: 64px 0 72px;
+  padding-block: 64px 72px;
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 56px;
@@ -80,7 +80,7 @@
 .ph-meta-foot { font-size: 12px; color: var(--ink-on-dark-2); }
 
 @media (max-width: 880px) {
-  .ph-inner { grid-template-columns: 1fr; gap: 32px; padding: 48px 0 56px; align-items: flex-start; }
+  .ph-inner { grid-template-columns: 1fr; gap: 32px; padding-block: 48px 56px; align-items: flex-start; }
 }
 
 /* ============================================================
