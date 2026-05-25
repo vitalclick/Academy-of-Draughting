@@ -23,8 +23,8 @@ export default async function LoginPage() {
           Sign in
         </h1>
         <p className="t-body" style={{ marginBottom: 20 }}>
-          Use your Academy admissions email. We&apos;ll send you a one-time sign-in link — no
-          password to remember.
+          Restricted to authorized Academy staff. Enter your work email and we&apos;ll send a
+          one-time sign-in link — no password to remember.
         </p>
         {features.supabase ? (
           <LoginForm />
