@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { captureError } from '@/lib/observability';
 import type {
   ApplicantRow,
   ApplicationRow,
@@ -29,7 +30,10 @@ export async function listApplications(opts?: {
     .limit(limit);
   if (opts?.status) query = query.eq('status', opts.status);
   const { data, error } = await query;
-  if (error) throw new Error(`listApplications: ${error.message}`);
+  if (error) {
+    await captureError('listApplications failed', error);
+    return [];
+  }
   return (data ?? []) as unknown as ApplicationWithApplicant[];
 }
 
@@ -98,7 +102,10 @@ export async function listEvents(opts?: { name?: string; limit?: number }): Prom
   let query = sb.from('events').select('*').order('occurred_at', { ascending: false }).limit(limit);
   if (opts?.name) query = query.eq('name', opts.name);
   const { data, error } = await query;
-  if (error) throw new Error(`listEvents: ${error.message}`);
+  if (error) {
+    await captureError('listEvents failed', error);
+    return [];
+  }
   return data ?? [];
 }
 
@@ -116,7 +123,10 @@ export async function listContent(opts?: {
   if (opts?.kind) query = query.eq('kind', opts.kind);
   if (opts?.state) query = query.eq('state', opts.state);
   const { data, error } = await query;
-  if (error) throw new Error(`listContent: ${error.message}`);
+  if (error) {
+    await captureError('listContent failed', error);
+    return [];
+  }
   return data ?? [];
 }
 
