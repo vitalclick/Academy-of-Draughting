@@ -35,20 +35,15 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 export function AdminSidebar({
-  email,
-  role,
   applicationsCount,
   studentsCount,
 }: {
-  email: string;
-  role: string;
   applicationsCount: number;
   studentsCount: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
-  const initials = email.slice(0, 2).toUpperCase();
 
   async function signOut() {
     setSigningOut(true);
@@ -101,11 +96,6 @@ export function AdminSidebar({
       })}
 
       <div className="admin-side-foot">
-        <span className="av">{initials}</span>
-        <div className="who">
-          <div className="who-name">{email}</div>
-          <div className="who-role">{role.toUpperCase()}</div>
-        </div>
         <button type="button" className="signout" onClick={signOut} disabled={signingOut}>
           {signingOut ? '…' : 'Sign out'}
         </button>
