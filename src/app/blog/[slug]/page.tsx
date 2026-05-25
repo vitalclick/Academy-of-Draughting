@@ -5,6 +5,7 @@ import { PageShell } from '@/components/chrome/page-shell';
 import { BreadcrumbJsonLd } from '@/seo/json-ld';
 import { getPublishedBlogPostBySlug } from '@/lib/db/content';
 import { renderMarkdown } from '@/lib/markdown';
+import { OG_IMAGE } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,7 @@ export async function generateMetadata({
       title: post.title,
       description: post.summary ?? undefined,
       publishedTime: post.published_at ?? undefined,
+      images: [{ url: OG_IMAGE.url, width: OG_IMAGE.width, height: OG_IMAGE.height, alt: OG_IMAGE.alt }],
     },
   };
 }

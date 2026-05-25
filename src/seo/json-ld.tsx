@@ -43,6 +43,26 @@ export function OrganizationJsonLd() {
   );
 }
 
+export function WebSiteJsonLd() {
+  return (
+    <JsonLd
+      data={{
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: SITE.name,
+        alternateName: SITE.short,
+        url: SITE.url,
+        inLanguage: 'en-ZA',
+        publisher: {
+          '@type': 'EducationalOrganization',
+          name: SITE.name,
+          url: SITE.url,
+        },
+      }}
+    />
+  );
+}
+
 export function CourseJsonLd({
   name,
   description,

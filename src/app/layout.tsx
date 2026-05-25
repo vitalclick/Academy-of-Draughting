@@ -9,8 +9,8 @@ import { CookieBanner } from '@/components/chrome/cookie-banner';
 import { Analytics } from '@/components/chrome/analytics';
 import { PersonalizationProvider } from '@/components/personalization/provider';
 import { ExitIntent } from '@/components/personalization/exit-intent';
-import { OrganizationJsonLd } from '@/seo/json-ld';
-import { SITE } from '@/lib/site';
+import { OrganizationJsonLd, WebSiteJsonLd } from '@/seo/json-ld';
+import { SITE, OG_IMAGE } from '@/lib/site';
 import './globals.css';
 
 const geistSans = Geist({
@@ -53,11 +53,20 @@ export const metadata: Metadata = {
     siteName: SITE.name,
     title: `${SITE.name} — Engineering careers start here`,
     description: SITE.description,
+    images: [
+      {
+        url: OG_IMAGE.url,
+        width: OG_IMAGE.width,
+        height: OG_IMAGE.height,
+        alt: OG_IMAGE.alt,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: SITE.name,
     description: SITE.description,
+    images: [{ url: OG_IMAGE.url, alt: OG_IMAGE.alt }],
   },
   robots: {
     index: true,
@@ -83,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <OrganizationJsonLd />
+        <WebSiteJsonLd />
         <PersonalizationProvider>
           <AidaProvider>
             {children}

@@ -9,6 +9,7 @@ import { BookingForm } from '@/sections/consultation/booking-form';
 import { BreadcrumbJsonLd, CourseJsonLd } from '@/seo/json-ld';
 import { CAMPUSES, getCampus, coursesForCampus } from '@/data/campuses';
 import { FEES, formatRand } from '@/data/funding';
+import { OG_IMAGE } from '@/lib/site';
 
 export function generateStaticParams() {
   return CAMPUSES.map((c) => ({ city: c.slug }));
@@ -27,7 +28,11 @@ export async function generateMetadata({
     description: campus.intro,
     keywords: campus.keywords,
     alternates: { canonical: `/campus/${campus.slug}` },
-    openGraph: { title: campus.headline, description: campus.intro },
+    openGraph: {
+      title: campus.headline,
+      description: campus.intro,
+      images: [{ url: OG_IMAGE.url, width: OG_IMAGE.width, height: OG_IMAGE.height, alt: OG_IMAGE.alt }],
+    },
   };
 }
 
