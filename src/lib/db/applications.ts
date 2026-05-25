@@ -7,6 +7,7 @@ import {
   localUpdateApplication,
   localGetApplication,
   localAppendEvent,
+  localGetEventNamesForApplicant,
 } from './local-store';
 import type { ApplicantRow, ApplicationRow, EventRow } from '@/types/database';
 import type { ApplicationDraft } from '@/lib/validation/application';
@@ -130,4 +131,20 @@ export async function logEvent(row: Omit<EventRow, 'id' | 'occurred_at'>) {
   }
   const { error } = await sb.from('events').insert({ ...row, occurred_at: new Date().toISOString() });
   if (error) console.warn('[events] insert failed', error.message);
+}
+
+/** Returns the names of all events recorded for a given applicant. */
+export async function getEventNamesForApplicant(applicantId: string): Promise<string[]> {
+  const sb = supabaseAdmin();
+  if (!sb) return localGetEventNamesForApplicant(applicantId);
+  const { data, error } = await sb
+    .from('events')
+    .select('name')
+    .eq('applicant_id', applicantId)
+    .limit(500);
+  if (error) {
+    console.warn('[events] fetch failed', error.message);
+    return [];
+  }
+  return (data ?? []).map((r) => r.name);
 }

@@ -100,3 +100,18 @@ export async function localAppendEvent(row: Omit<EventRow, 'id' | 'occurred_at'>
   const line = JSON.stringify({ occurred_at: new Date().toISOString(), ...row }) + '\n';
   await fs.appendFile(EVENTS_FILE, line);
 }
+
+export async function localGetEventNamesForApplicant(applicantId: string): Promise<string[]> {
+  try {
+    const buf = await fs.readFile(EVENTS_FILE, 'utf8');
+    return buf
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l) as { applicant_id?: string | null; name?: string })
+      .filter((e) => e.applicant_id === applicantId && typeof e.name === 'string')
+      .map((e) => e.name as string);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw err;
+  }
+}
