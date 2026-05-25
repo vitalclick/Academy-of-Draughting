@@ -1,7 +1,9 @@
 import { QuoteRequestSchema } from '@/lib/validation/funding';
 import { computeQuote, formatRand, NSFAS_HOUSEHOLD_THRESHOLD } from '@/data/funding';
-import { upsertApplicantByEmail, logEvent } from '@/lib/db/applications';
+import { upsertApplicantByEmail, logEvent, getEventNamesForApplicant } from '@/lib/db/applications';
 import { upsertHubspotLead } from '@/lib/hubspot/contacts';
+import { computeLeadScore } from '@/lib/leads/scoring';
+import { sendMetaEvent } from '@/lib/analytics/meta-capi';
 import { sendEmail } from '@/lib/email/resend';
 import { env, publicSiteUrl } from '@/lib/env';
 import { SITE } from '@/lib/site';
@@ -82,13 +84,24 @@ export async function POST(req: Request) {
       },
     });
 
+    const leadScore = computeLeadScore(await getEventNamesForApplicant(applicant.id));
+
     await upsertHubspotLead({
       email: data.email,
       firstName: data.firstName,
       phone: data.phone,
       programme: quote.courseId,
       source: `funding_quote:${quote.route}`,
+      leadScore,
     }).catch((err) => console.warn('[quote] hubspot failed', err));
+
+    await sendMetaEvent({
+      eventName: 'Lead',
+      email: data.email,
+      phone: data.phone,
+      value: quote.payable,
+      sourceUrl: `${publicSiteUrl()}/funding`,
+    }).catch(() => {});
 
     await sendEmail({
       to: data.email,

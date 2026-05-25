@@ -56,6 +56,11 @@ const ServerEnvSchema = z.object({
   // Public analytics
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_META_PIXEL_ID: z.string().optional(),
+  // Meta Conversions API — server-side, privacy-resilient conversion tracking
+  META_CAPI_ACCESS_TOKEN: z.string().optional(),
+  // PostHog — product analytics, funnels, session replay (POPIA-friendly self-host)
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
 
   // Error sink — receives POST {level,message,context} on captureError().
   // Supports any HTTPS webhook (Sentry, Slack, Discord, custom).
@@ -88,6 +93,8 @@ export const features = {
   ai: Boolean(env.ANTHROPIC_API_KEY),
   trackingTokens: Boolean(env.TRACKING_TOKEN_SECRET),
   analytics: Boolean(env.NEXT_PUBLIC_GA_MEASUREMENT_ID || env.NEXT_PUBLIC_META_PIXEL_ID),
+  metaCapi: Boolean(env.NEXT_PUBLIC_META_PIXEL_ID && env.META_CAPI_ACCESS_TOKEN),
+  posthog: Boolean(env.NEXT_PUBLIC_POSTHOG_KEY),
   errorSink: Boolean(env.ERROR_SINK_URL),
 };
 

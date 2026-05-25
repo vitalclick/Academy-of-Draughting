@@ -89,6 +89,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Analytics
               gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}
               pixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID}
+              posthogKey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
+              posthogHost={process.env.NEXT_PUBLIC_POSTHOG_HOST}
             />
           </AidaProvider>
         </PersonalizationProvider>

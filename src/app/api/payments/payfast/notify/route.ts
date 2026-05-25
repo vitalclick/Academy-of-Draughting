@@ -1,7 +1,8 @@
 import { verifyItn } from '@/lib/payments/payfast';
 import { logEvent } from '@/lib/db/applications';
+import { sendMetaEvent } from '@/lib/analytics/meta-capi';
 import { sendEmail } from '@/lib/email/resend';
-import { env } from '@/lib/env';
+import { env, publicSiteUrl } from '@/lib/env';
 
 export const runtime = 'nodejs';
 
@@ -39,6 +40,15 @@ export async function POST(req: Request) {
         pfPaymentId: params.pf_payment_id ?? '',
       },
     });
+
+    await sendMetaEvent({
+      eventName: 'Purchase',
+      email: params.email_address,
+      value: Number(params.amount_gross) || undefined,
+      currency: 'ZAR',
+      eventId: params.m_payment_id,
+      sourceUrl: `${publicSiteUrl()}/funding`,
+    }).catch(() => {});
 
     if (env.ADMISSIONS_INBOX) {
       await sendEmail({
