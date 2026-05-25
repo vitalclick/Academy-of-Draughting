@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: '/courses', priority: 0.9 },
     { url: '/career', priority: 0.8 },
     { url: '/career/quiz', priority: 0.7 },
+    { url: '/funding', priority: 0.9 },
     { url: '/blog', priority: 0.6 },
     { url: '/about', priority: 0.7 },
     { url: '/apply', priority: 0.9 },

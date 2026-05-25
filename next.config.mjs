@@ -53,7 +53,7 @@ function buildCsp() {
     `connect-src ${connectSrc.join(' ')}`,
     `frame-ancestors 'none'`,
     `base-uri 'self'`,
-    `form-action 'self' ${SITE_URL}`,
+    `form-action 'self' ${SITE_URL} https://www.payfast.co.za https://sandbox.payfast.co.za`,
     `object-src 'none'`,
     `upgrade-insecure-requests`,
   ].join('; ');
