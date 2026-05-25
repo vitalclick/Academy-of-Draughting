@@ -16,8 +16,6 @@ const NAV: NavItem[] = [
   { k: 'communications', l: 'Communications', ic: '✉', href: '/admin/communications' },
   { sec: 'ACADEMIC' },
   { k: 'programmes', l: 'Programmes', ic: '◰', href: '/admin/programmes' },
-  { k: 'schedule', l: 'Schedule', ic: '☰', href: '/admin/schedule' },
-  { k: 'faculty', l: 'Faculty', ic: '◐', href: '/admin/faculty' },
   { sec: 'CONTENT' },
   { k: 'content', l: 'Content Studio', ic: '✎', href: '/admin/content' },
   { k: 'signatures', l: 'Email signatures', ic: '⊞', href: '/admin/signatures' },

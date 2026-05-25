@@ -110,19 +110,19 @@ const HEADLINES: Record<HeadlineKey, { eyebrow: string; title: React.ReactNode; 
     eyebrow: 'FOR PARENTS · ESTABLISHED 1981',
     title: (
       <>
-        Specialist since 1981. <span className="accent">12,000+ graduates.</span>
+        Specialist since 1981. <span className="accent">Drawing offices, taught right.</span>
       </>
     ),
-    sub: 'A specialist drawing-office school with 45 years of placements into SA engineering and design offices.',
+    sub: 'A specialist drawing-office school training draughtspeople for SA engineering and design offices since 1981.',
   },
   'parent::drawing_office_ready': {
-    eyebrow: 'FOR PARENTS · OUTCOMES MATTER',
+    eyebrow: 'FOR PARENTS · A REAL QUALIFICATION',
     title: (
       <>
-        Outcomes you can <span className="accent">point at.</span>
+        A real qualification, <span className="accent">not a promise.</span>
       </>
     ),
-    sub: '96% completion, 87% placement within 12 months on MDDOP N4/N5. Hard numbers, not motivation posters.',
+    sub: 'Nationally examined draughting on MDDOP N4/N5 — built around the standards SA engineering and design offices actually demand.',
   },
 
   // Returning

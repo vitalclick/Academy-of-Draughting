@@ -3,8 +3,6 @@ import { HomeHero } from '@/sections/home/hero';
 import { TrustStrip } from '@/sections/home/trust-strip';
 import { AIFeaturesSection } from '@/sections/home/ai-features';
 import { CoursesSnapshot } from '@/sections/home/courses-snapshot';
-import { CareerIntelSection } from '@/sections/home/career-intel';
-import { OutcomesSection } from '@/sections/home/outcomes';
 import { FinalCTA } from '@/components/ui/final-cta';
 
 export default function HomePage() {
@@ -14,8 +12,6 @@ export default function HomePage() {
       <TrustStrip />
       <AIFeaturesSection />
       <CoursesSnapshot />
-      <CareerIntelSection />
-      <OutcomesSection />
       <FinalCTA />
     </PageShell>
   );

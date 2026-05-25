@@ -57,26 +57,6 @@ export function HomeHero() {
               Take the recommender
             </Link>
           </div>
-
-          <div className="hero-meta">
-            <div className="hero-meta-cell">
-              <div className="hero-meta-value">
-                45
-                <span style={{ color: 'var(--ink-on-dark-3)', fontSize: '60%', marginLeft: 2 }}>yrs</span>
-              </div>
-              <span className="hero-meta-label">Specialist Heritage</span>
-            </div>
-            <div className="hero-meta-cell">
-              <div className="hero-meta-value">3</div>
-              <span className="hero-meta-label">Study Modes</span>
-            </div>
-            <div className="hero-meta-cell">
-              <div className="hero-meta-value">
-                8<span style={{ color: 'var(--ink-on-dark-3)', fontSize: '60%', marginLeft: 2 }}>+</span>
-              </div>
-              <span className="hero-meta-label">Career Pathways</span>
-            </div>
-          </div>
         </div>
 
         <div className="hero-right">
