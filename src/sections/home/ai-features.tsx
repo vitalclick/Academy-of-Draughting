@@ -199,47 +199,6 @@ function FormMini() {
   );
 }
 
-function IntelMini() {
-  return (
-    <div
-      style={{
-        padding: 14,
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 10,
-        justifyContent: 'center',
-      }}
-    >
-      <div>
-        <span className="t-mono-xs" style={{ color: 'var(--ink-on-dark-3)' }}>
-          MEDIAN · GAUTENG
-        </span>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em' }}>R 28 400</span>
-          <span className="t-mono-sm" style={{ color: 'var(--cyan-400)' }}>
-            ↑ 4.2%
-          </span>
-        </div>
-      </div>
-      <svg viewBox="0 0 200 50" width="100%" height="50" aria-hidden="true">
-        <polyline
-          points="0,40 25,38 50,32 75,28 100,30 125,22 150,18 175,12 200,8"
-          fill="none"
-          stroke="var(--cyan-400)"
-          strokeWidth="1.5"
-        />
-        <polyline
-          points="0,50 25,50 50,50 75,50 100,50 125,50 150,50 175,50 200,50"
-          fill="none"
-          stroke="var(--line-on-dark)"
-          strokeWidth="0.5"
-        />
-      </svg>
-    </div>
-  );
-}
-
 function AICard({
   grid,
   label,
@@ -304,25 +263,18 @@ export function AIFeaturesSection() {
             visual={<MatchScorePreview />}
           />
           <AICard
-            grid="ai-card-third"
+            grid="ai-card-wide"
             label="03 / RECOMMENDER"
             title="Programme Recommender"
             desc="Filter across mode, software, and outcome to find the right module stack for you."
             visual={<RecMini />}
           />
           <AICard
-            grid="ai-card-third"
+            grid="ai-card-wide"
             label="04 / APPLICATION"
             title="Streamlined Application"
             desc="Document upload with field parsing, autofill, and real-time eligibility checks."
             visual={<FormMini />}
-          />
-          <AICard
-            grid="ai-card-third"
-            label="05 / OUTLOOK"
-            title="Industry Outlook & Salaries"
-            desc="Salary bands, regional demand, hiring trends and software requirements — updated quarterly."
-            visual={<IntelMini />}
           />
         </div>
       </div>
