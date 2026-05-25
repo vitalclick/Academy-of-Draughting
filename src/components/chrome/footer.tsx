@@ -65,15 +65,15 @@ export function SiteFooter() {
 
             <FooterCol title="Apply">
               <Link href="/apply">Start Application</Link>
-              <Link href="/apply#funding">Funding &amp; Payment</Link>
-              <Link href="/apply#entry">Entry Requirements</Link>
+              <Link href="/funding">Fees &amp; Funding</Link>
+              <Link href="/book">Book a Consultation</Link>
               <Link href="/apply#intake">Intake Dates</Link>
             </FooterCol>
 
             <FooterCol title="Campus">
-              <Link href="/about#jhb">Johannesburg</Link>
-              <Link href="/about#dbn">Durban</Link>
-              <Link href="/about#online">Online · Nationwide</Link>
+              <Link href="/campus/johannesburg">Johannesburg</Link>
+              <Link href="/campus/durban">Durban</Link>
+              <Link href="/campus/online">Online · Nationwide</Link>
               <Link href="/contact">Visit Us</Link>
             </FooterCol>
 
