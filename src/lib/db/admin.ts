@@ -82,6 +82,39 @@ export async function updateApplicationStatus(
   return data;
 }
 
+export async function adminCreateApplication(input: {
+  applicantId: string;
+  programme: string;
+  mode: string;
+  campus: string;
+  funding_plan: string;
+  intake: string | null;
+  status: ApplicationStatus;
+}): Promise<ApplicationRow> {
+  const sb = supabaseAdmin();
+  if (!sb) throw new Error('Supabase unavailable');
+  const now = new Date().toISOString();
+  const decided = input.status === 'accepted' || input.status === 'rejected';
+  const { data, error } = await sb
+    .from('applications')
+    .insert({
+      applicant_id: input.applicantId,
+      status: input.status,
+      programme: input.programme,
+      mode: input.mode,
+      campus: input.campus,
+      funding_plan: input.funding_plan,
+      intake: input.intake,
+      submitted_at: input.status === 'draft' ? null : now,
+      decided_at: decided ? now : null,
+      draft_payload: {},
+    })
+    .select()
+    .single();
+  if (error) throw new Error(`adminCreateApplication: ${error.message}`);
+  return data;
+}
+
 export async function listLeads(opts?: { limit?: number }) {
   const sb = supabaseAdmin();
   if (!sb) return [];
