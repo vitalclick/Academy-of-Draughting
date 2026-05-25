@@ -16,6 +16,7 @@ const NAV = [
   { href: '/admin/events', label: 'Events' },
   { href: '/admin/content', label: 'Content Studio' },
   { href: '/admin/signatures', label: 'Email signatures' },
+  { href: '/admin/settings', label: 'Settings' },
 ];
 
 export default async function AdminAuthedLayout({ children }: { children: React.ReactNode }) {
@@ -29,12 +30,6 @@ export default async function AdminAuthedLayout({ children }: { children: React.
           <span className="t-mono-xs" style={{ color: 'var(--ink-on-dark-3)' }}>
             ACADEMY · ADMIN
           </span>
-          <div style={{ marginTop: 4, fontSize: 16, fontWeight: 500 }}>
-            {admin.email}
-            <div className="t-mono-xs" style={{ color: 'var(--ink-on-dark-3)' }}>
-              {admin.role.toUpperCase()}
-            </div>
-          </div>
         </div>
         <nav className="admin-nav">
           {NAV.map((n) => (
