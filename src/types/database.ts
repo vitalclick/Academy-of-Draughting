@@ -164,6 +164,24 @@ export type EventRow = {
   payload: Record<string, unknown>;
 };
 
+export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'waived';
+
+export type PaymentRow = {
+  id: string;
+  enrollment_id: string | null;
+  applicant_id: string | null;
+  amount: number;
+  currency: string;
+  plan: string | null;
+  status: PaymentStatus;
+  due_date: string | null;
+  paid_at: string | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -253,6 +271,16 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Omit<SignatureRow, 'id'>>;
+        Relationships: [];
+      };
+      payments: {
+        Row: PaymentRow;
+        Insert: Omit<PaymentRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<PaymentRow, 'id'>>;
         Relationships: [];
       };
     };

@@ -24,6 +24,7 @@ export default async function AdminAuthedLayout({ children }: { children: React.
         email={admin.email}
         role={admin.role}
         applicationsCount={counts.applications_submitted}
+        studentsCount={counts.students_active}
       />
       <div className="admin-main">
         <AdminTopBar />
