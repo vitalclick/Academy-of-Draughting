@@ -29,7 +29,7 @@ export default async function AdminAuthedLayout({ children }: { children: React.
           <span className="t-mono-xs" style={{ color: 'var(--ink-on-dark-3)' }}>
             ACADEMY · ADMIN
           </span>
-          <div style={{ marginTop: 4, fontSize: 16, fontWeight: 500 }}>
+          <div style={{ marginTop: 4, fontSize: 16, fontWeight: 500, overflowWrap: 'anywhere' }}>
             {admin.email}
             <div className="t-mono-xs" style={{ color: 'var(--ink-on-dark-3)' }}>
               {admin.role.toUpperCase()}
