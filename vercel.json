@@ -30,7 +30,15 @@
     },
     "src/app/api/health/route.ts": {
       "maxDuration": 5
+    },
+    "src/app/api/cron/purge-documents/route.ts": {
+      "maxDuration": 60
     }
   },
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/purge-documents",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }
