@@ -1,8 +1,27 @@
 import Link from 'next/link';
 import { getOverviewCounts, listApplications } from '@/lib/db/admin';
+import { getWebAnalytics, RANGES, SEGMENTS, type RangeKey, type SegmentKey } from '@/lib/db/analytics';
 import { Activity, IntakeRow, Kpi } from './_components/viz';
+import { AnalyticsFilters } from './_components/analytics-filters';
+import {
+  MetricCard,
+  TrafficChart,
+  BarList,
+  GeoList,
+  DeviceDonut,
+  fmtNum,
+  fmtDuration,
+  fmtPct,
+} from './_components/analytics';
 
 export const dynamic = 'force-dynamic';
+
+function parseRange(v: string | undefined): RangeKey {
+  return (RANGES.find((r) => r.key === v)?.key ?? '7d') as RangeKey;
+}
+function parseSegment(v: string | undefined): SegmentKey {
+  return (SEGMENTS.find((s) => s.key === v)?.key ?? 'all') as SegmentKey;
+}
 
 function nameOf(a: { applicant?: { first_name?: string | null; last_name?: string | null; email?: string | null } | null }) {
   const ap = a.applicant;
@@ -26,11 +45,26 @@ const FUNNEL = [
   { l: 'Enrolled', s: 'Paid + signed', n: 58, pct: 1.4, w: 12 },
 ];
 
-export default async function AdminOverviewPage() {
-  const [counts, recentApps] = await Promise.all([
+export default async function AdminOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string; segment?: string }>;
+}) {
+  const sp = await searchParams;
+  const range = parseRange(sp.range);
+  const segment = parseSegment(sp.segment);
+
+  const [counts, recentApps, analytics] = await Promise.all([
     getOverviewCounts(),
     listApplications({ limit: 5 }),
+    getWebAnalytics(range, segment),
   ]);
+
+  const t = analytics.totals;
+  const rangeLabel = RANGES.find((r) => r.key === range)?.label ?? '';
+  const segmentLabel = SEGMENTS.find((s) => s.key === segment)?.label ?? '';
+  const visitorSpark = analytics.series.map((p) => p.visitors);
+  const pvSpark = analytics.series.map((p) => p.pageViews);
 
   return (
     <>
@@ -57,6 +91,81 @@ export default async function AdminOverviewPage() {
           </Link>
         </div>
       </div>
+
+      <section className="an-section">
+        <div className="an-head">
+          <div>
+            <h2 className="adm-card-title" style={{ fontSize: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+              Website analytics
+              {analytics.isSample && <span className="an-sample">SAMPLE DATA</span>}
+            </h2>
+            <div className="adm-card-sub">
+              {rangeLabel} · {segmentLabel} · first-party
+            </div>
+          </div>
+          <AnalyticsFilters range={range} segment={segment} generatedAt={analytics.generatedAt} />
+        </div>
+
+        <div className="an-kpi-row">
+          <MetricCard label="Total visitors" value={fmtNum(t.visitors)} delta={analytics.deltas.visitors} spark={visitorSpark} />
+          <MetricCard label="Unique users" value={fmtNum(t.uniqueUsers)} delta={analytics.deltas.uniqueUsers} spark={visitorSpark} />
+          <MetricCard label="Page views" value={fmtNum(t.pageViews)} delta={analytics.deltas.pageViews} spark={pvSpark} />
+          <MetricCard label="Bounce rate" value={fmtPct(t.bounceRate)} meta="single-page sessions" />
+          <MetricCard label="Avg. session" value={fmtDuration(t.avgSessionSec)} meta="time on site" />
+        </div>
+
+        <div className="an-grid-main" style={{ marginBottom: 16 }}>
+          <div className="adm-card">
+            <div className="adm-card-head">
+              <div>
+                <h3 className="adm-card-title">Traffic over time</h3>
+                <div className="adm-card-sub">Page views &amp; visitors · {rangeLabel.toLowerCase()}</div>
+              </div>
+            </div>
+            <div className="adm-card-body">
+              <TrafficChart series={analytics.series} />
+            </div>
+          </div>
+          <div className="adm-card">
+            <div className="adm-card-head">
+              <div>
+                <h3 className="adm-card-title">Devices</h3>
+                <div className="adm-card-sub">Share of visitors</div>
+              </div>
+            </div>
+            <div className="adm-card-body">
+              <DeviceDonut items={analytics.devices} />
+            </div>
+          </div>
+        </div>
+
+        <div className="an-grid-3">
+          <div className="adm-card">
+            <div className="adm-card-head">
+              <h3 className="adm-card-title">Traffic sources</h3>
+            </div>
+            <div className="adm-card-body">
+              <BarList items={analytics.sources} />
+            </div>
+          </div>
+          <div className="adm-card">
+            <div className="adm-card-head">
+              <h3 className="adm-card-title">Top pages</h3>
+            </div>
+            <div className="adm-card-body">
+              <BarList items={analytics.topPages} />
+            </div>
+          </div>
+          <div className="adm-card">
+            <div className="adm-card-head">
+              <h3 className="adm-card-title">Geographic distribution</h3>
+            </div>
+            <div className="adm-card-body">
+              <GeoList items={analytics.geo} />
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="adm-kpi-row">
         <Kpi label="Applications · total" value={counts.applications_total} delta="all-time" direction="up" sparkSeed={1} />

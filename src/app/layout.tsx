@@ -4,6 +4,7 @@ import { AidaProvider } from '@/components/chrome/aida-context';
 import { AidaWidget } from '@/components/chrome/aida-widget';
 import { WhatsAppFab } from '@/components/chrome/whatsapp-fab';
 import { ServiceWorkerRegister } from '@/components/chrome/service-worker';
+import { PageViewTracker } from '@/components/chrome/pageview-tracker';
 import { CookieBanner } from '@/components/chrome/cookie-banner';
 import { Analytics } from '@/components/chrome/analytics';
 import { PersonalizationProvider } from '@/components/personalization/provider';
@@ -88,6 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AidaWidget />
             <WhatsAppFab />
             <ServiceWorkerRegister />
+            <PageViewTracker />
             <CookieBanner />
             <ExitIntent />
             <Analytics
